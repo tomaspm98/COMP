@@ -4,23 +4,86 @@ grammar Javamm;
     package pt.up.fe.comp2023;
 }
 
-INTEGER : [0-9]+ ;
-ID : [a-zA-Z_][a-zA-Z_0-9]* ;
+INT : ('0' | [1-9][0-9]*);
+LETTER: [a-zA-Z_$];
+ID : LETTER (LETTER | [0-9])*;
+BOOL: ('true' | 'false');
+COMMENT: ('/*' .* '*/') | ('//' .* '\n');
 
 WS : [ \t\n\r\f]+ -> skip ;
 
 program
-    : statement+ EOF
+    : importDeclaration* classDeclaration EOF
+    ;
+importDeclaration
+    : ('import' ID ( '.' ID )* ';'
+    ;
+
+classDeclaration
+    : 'class' ID ('extends' ID)? '{' (varDeclaration)* (methodDeclaration)*
+    ;
+
+varDeclaration
+    : type ID ';'
+    ;
+
+
+methodDeclaration
+     : 'public' type ID '(' ( type ID (',' type ID)*)? ')' '{' (varDeclaration)* ( statement )* 'return' expression ';' '}'
+     | 'public' 'static' 'void' 'main' '(' 'String' '[' ']' ID ')' '{' ( varDeclaration)* (statement)* '}' ';'
+     ;
+
+type
+    : 'int' '['']' #IntArray
+    | 'boolean' #Bool
+    | 'int' #Int
+    | ID #ImportedType
     ;
 
 statement
-    : expression ';'
-    | ID '=' INTEGER ';'
+    : '{' ( statement )* '}' #Scope
+    | 'if' '(' expression ')' statement 'else' statement #If
+    | 'while' '(' expression ')' statement #WhileLoop
+    | expression ';' #SimpleStatement
+    | ID '=' expression ';' #SimpleAssignment
+    | ID '[' expression ']' '=' expression ';' #ArrayAssignment
     ;
 
 expression
-    : expression op=('*' | '/') expression #BinaryOp
+    :
+    expression '.' ID '('  (expression ( ',' expression)*)? ')' #MethodCall
+    | expression '[' expression ']' #ArrayAccess
+    | '!' expression #Negation
+    | expression op=('*' | '/') expression #BinaryOp
     | expression op=('+' | '-') expression #BinaryOp
-    | value=INTEGER #Integer
+    | expression op=('&&' | '<' | '>') expression #BinaryOp
+    | expression '.' 'length' #ArrayLength
+    | 'new' 'int' '[' expression ']' #IntArrayDeclaration
+    | 'new' ID '(' ')' #Instantiation
+    | '(' expression ')' #Parenthesis
+    | value=INT #Integer
+    | value=BOOL #Boolean
     | value=ID #Identifier
+    | 'this' #ClassAccess
     ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
