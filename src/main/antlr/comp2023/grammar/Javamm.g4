@@ -4,11 +4,11 @@ grammar Javamm;
     package pt.up.fe.comp2023;
 }
 
+COMMENT: ('/*' .* '*/') | ('//' .* '\n');
 INT : ('0' | [1-9][0-9]*);
 LETTER: [a-zA-Z_$];
 ID : LETTER (LETTER | [0-9])*;
 BOOL: ('true' | 'false');
-COMMENT: ('/*' .* '*/') | ('//' .* '\n');
 
 WS : [ \t\n\r\f]+ -> skip ;
 
@@ -16,7 +16,7 @@ program
     : importDeclaration* classDeclaration EOF
     ;
 importDeclaration
-    : ('import' ID ( '.' ID )* ';'
+    : 'import' ID ( '.' ID )* ';'
     ;
 
 classDeclaration
@@ -29,15 +29,15 @@ varDeclaration
 
 
 methodDeclaration
-     : 'public' type ID '(' ( type ID (',' type ID)*)? ')' '{' (varDeclaration)* ( statement )* 'return' expression ';' '}'
-     | 'public' 'static' 'void' 'main' '(' 'String' '[' ']' ID ')' '{' ( varDeclaration)* (statement)* '}' ';'
+     : ('public')? type ID '(' ( type ID (',' type ID)*)? ')' '{' (varDeclaration)* ( statement )* 'return' expression ';' '}'
+     | ('public')? 'static' 'void' 'main' '(' 'String' '[' ']' ID ')' '{' (varDeclaration)* (statement)* '}'
      ;
 
 type
     : 'int' '['']' #IntArray
     | 'boolean' #Bool
     | 'int' #Int
-    | ID #ImportedType
+    | ID #CustomType
     ;
 
 statement
@@ -58,7 +58,7 @@ expression
     | expression op=('+' | '-') expression #BinaryOp
     | expression op=('&&' | '<' | '>') expression #BinaryOp
     | expression '.' 'length' #ArrayLength
-    | 'new' 'int' '[' expression ']' #IntArrayDeclaration
+    | 'new' 'int' '[' expression ']' #IntArrayInstantiation
     | 'new' ID '(' ')' #Instantiation
     | '(' expression ')' #Parenthesis
     | value=INT #Integer
