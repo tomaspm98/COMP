@@ -13,14 +13,14 @@ BOOL: ('true' | 'false');
 WS : [ \t\n\r\f]+ -> skip ;
 
 program
-    : importDeclaration* classDeclaration EOF
-    ;
+    : (importDeclaration)* classDeclaration <EOF> ;
+
 importDeclaration
-    : 'import' ID ( '.' ID )* ';'
+    : 'import' ID ('.' ID)* ';'
     ;
 
 classDeclaration
-    : 'class' ID ('extends' ID)? '{' (varDeclaration)* (methodDeclaration)*
+    : 'class' ID ('extends' ID)? '{' (varDeclaration)* (methodDeclaration)* '}'
     ;
 
 varDeclaration
@@ -65,7 +65,9 @@ expression
     | value=BOOL #Boolean
     | value=ID #Identifier
     | 'this' #ClassAccess
+    | ID  #NormalIdentifier
     ;
+
 
 
 
