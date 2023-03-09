@@ -5,59 +5,57 @@ import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import java.util.List;
 
-public class SymbolTableDeveloper extends AJmmVisitor<String, String> implements SymbolTable, Cloneable {
+public class SymbolTableDeveloper implements SymbolTable {
     private Map<String, Symbol> parameters;
     private Map<String, Symbol> variables;
+    private List<String> imports;
+    private List<Symbol> fields;
+    private String className;
+    private String superClass;
+
 
     public SymbolTableDeveloper(){
         this.parameters= new LinkedHashMap<String, Symbol>();
         this.variables=new LinkedHashMap<String,Symbol>();
+        this.imports = new ArrayList<>();
+        this.className= new String();
     }
 
-   @Override
-    protected void buildVisitor() {
-        //addVisit("Imports", this::getImports);
-        return;
-    }
     @Override
     public List<String> getImports(){
-        /*
-        List<String> imports = new ArrayList<>();
-        for (Symbol symbol : symbols) {
-            if (symbol.isImported()) {
-                imports.add(symbol.getImportName());
-            }
-        }
         return imports;
-
-         */
-        return null;
     }
 
     @Override
     public String getClassName() {
-        return null;
+        return className;
+    }
+    public void setClassName(String className){
+        this.className=className;
     }
 
     @Override
     public String getSuper() {
-        return null;
+        return superClass;
+    }
+    public void setSuper(String superClass){
+        this.superClass=superClass;
     }
 
     @Override
     public List<Symbol> getFields() {
-        return null;
+        return fields;
     }
 
     @Override
-    public List<String> getMethods() {
-        return null;
-    }
+    public List<String> getMethods() {return null;}
 
     @Override
     public Type getReturnType(String s) {
@@ -74,11 +72,4 @@ public class SymbolTableDeveloper extends AJmmVisitor<String, String> implements
         return null;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public SymbolTable clone() throws CloneNotSupportedException{
-        SymbolTable newTable = (SymbolTable)super.clone();
-        //newTable.ge = (Map<String, Symbol>)this.variables.clone();
-        return newTable;
-    }
 }
