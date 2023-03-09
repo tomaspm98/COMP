@@ -4,41 +4,21 @@ grammar Javamm;
     package pt.up.fe.comp2023;
 }
 
-COMMENT: ('/*' [^*/]* '*/') | ('//' [^\n]* '\n');
-INT : ('0' | [1-9][0-9]*);
-ID : LETTER (LETTER | [0-9])*;
-LETTER: [a-zA-Z_$];
-BOOL: ('true' | 'false');
-
 WS : [ \t\n\r\f]+ -> skip ;
-
-program
-    : (importDeclaration)* classDeclaration <EOF> ;
-
-importDeclaration
-    : 'import' ID ('.' ID)* ';'
-    ;
+COMMENT: ('/*' [^*/]* '*/') | ('//' [^\n]* '\n');
+BOOL: ('true' | 'false');
 
 classDeclaration
     : 'class' ID ('extends' ID)? '{' (varDeclaration)* (methodDeclaration)* '}'
     ;
 
-varDeclaration
-    : type ID ';'
-    ;
-
-
 methodDeclaration
      : ('public')? type ID '(' ( type ID (',' type ID)*)? ')' '{' (varDeclaration)* ( statement )* 'return' expression ';' '}'
-     | ('public')? 'static' 'void' 'main' '(' 'String' '[' ']' ID ')' '{' (varDeclaration)* (statement)* '}'
+     | ('public')? 'static' 'void' 'main' '(' type '[' ']' ID ')' '{' (varDeclaration)* (statement)* '}'
      ;
 
-type
-    : 'int' '['']' #IntArray
-    | 'boolean' #Bool
-    | 'int' #Int
-    | ID #CustomType
-    ;
+program
+    : (importDeclaration)* classDeclaration <EOF> ;
 
 statement
     : '{' ( statement )* '}' #Scope
@@ -70,15 +50,20 @@ expression
     | 'this' #ClassAccess
     ;
 
+importDeclaration
+    : 'import' ID ('.' ID)* ';'
+    ;
 
+varDeclaration
+    : type ID ';'
+    ;
+type
+    : 'int' '['']' #IntArray
+    | 'boolean' #Bool
+    | 'int' #Int
+    | ID #CustomType
+    ;
 
-
-
-
-
-
-
-
-
-
-
+INT : ('0' | [1-9][0-9]*);
+ID : LETTER (LETTER | [0-9])*;
+LETTER: [a-zA-Z_$];

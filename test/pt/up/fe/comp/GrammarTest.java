@@ -23,6 +23,8 @@ public class GrammarTest {
     private static final String INSTANCE_METHOD = "methodDeclaration";
     private static final String STATEMENT = "statement";
     private static final String EXPRESSION = "expression";
+    private static final String TYPE = "type";
+    private static final String VAR_DECLARATION = "varDeclaration";
 
     @Test
     public void testImportSingle() {
@@ -40,6 +42,9 @@ public class GrammarTest {
     }
 
     @Test
+    public void testDecl() { TestUtils.parseVerbose("Bar e;", VAR_DECLARATION);}
+
+    @Test
     public void testVarDecls() {
         TestUtils.parseVerbose("class Foo {int a; int[] b; int c; boolean d; Bar e;}");
     }
@@ -52,6 +57,11 @@ public class GrammarTest {
     @Test
     public void testMainMethodEmpty() {
         TestUtils.parseVerbose("static void main(String[] args) {}", MAIN_METHOD);
+    }
+
+    @Test
+    public void testStringType() {
+        TestUtils.parseVerbose("String", TYPE);
     }
 
     @Test
