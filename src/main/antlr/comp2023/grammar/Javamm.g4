@@ -52,15 +52,18 @@ statement
 expression
     :
     expression '.' ID '('  (expression ( ',' expression)*)? ')' #MethodCall
-    | expression '[' expression ']' #ArrayAccess
-    | '!' expression #Negation
-    | expression op=('*' | '/') expression #BinaryOp
-    | expression op=('+' | '-') expression #BinaryOp
-    | expression op=('&&' | '<' | '>') expression #BinaryOp
     | expression '.' 'length' #ArrayLength
+    | expression '[' expression ']' #ArrayAccess
+    | '(' expression ')' #Parenthesis
+    | '!' expression #Negation
+    | expression op=('*' | '/' | '%') expression #BinaryOp
+    | expression op=('+' | '-') expression #BinaryOp
+    | expression op=('<' | '>' | '<=' | '>=') expression #BinaryOp
+    | expression op=('==' | '!=') expression #BinaryOp
+    | expression op='&&' expression #BinaryOp
+    | expression op='||' expression #BinaryOp
     | 'new' 'int' '[' expression ']' #IntArrayInstantiation
     | 'new' ID '(' ')' #Instantiation
-    | '(' expression ')' #Parenthesis
     | value=INT #Integer
     | value=BOOL #Boolean
     | value=ID #Identifier
