@@ -9,11 +9,11 @@ COMMENT: ('/*' [^*/]* '*/') | ('//' [^\n]* '\n');
 BOOL: ('true' | 'false');
 
 classDeclaration
-    : 'class' ID ('extends' ID)? '{' (varDeclaration)* (methodDeclaration)* '}'
+    : 'class' className=ID ('extends' superClassName=ID)? '{' (varDeclaration)* (methodDeclaration)* '}'
     ;
 
 methodDeclaration
-     : ('public')? type ID '(' ( type ID (',' type ID)*)? ')' '{' (varDeclaration)* ( statement )* 'return' expression ';' '}'
+     : ('public')? type methodName=ID '(' ( type ID (',' type ID)*)? ')' '{' (varDeclaration)* ( statement )* 'return' expression ';' '}'
      | ('public')? 'static' 'void' 'main' '(' type '[' ']' ID ')' '{' (varDeclaration)* (statement)* '}'
      ;
 
@@ -25,13 +25,13 @@ statement
     | 'if' '(' expression ')' statement 'else' statement #If
     | 'while' '(' expression ')' statement #WhileLoop
     | expression ';' #SimpleStatement
-    | ID '=' expression ';' #SimpleAssignment
-    | ID '[' expression ']' '=' expression ';' #ArrayAssignment
+    | varName=ID '=' expression ';' #SimpleAssignment
+    | varName=ID '[' expression ']' '=' expression ';' #ArrayAssignment
     ;
 
 expression
     :
-    expression '.' ID '('  (expression ( ',' expression)*)? ')' #MethodCall
+    expression '.' methodName=ID '('  (expression ( ',' expression)*)? ')' #MethodCall
     | expression '.' 'length' #ArrayLength
     | expression '[' expression ']' #ArrayAccess
     | '(' expression ')' #Parenthesis
@@ -43,7 +43,7 @@ expression
     | expression op='&&' expression #BinaryOp
     | expression op='||' expression #BinaryOp
     | 'new' 'int' '[' expression ']' #IntArrayInstantiation
-    | 'new' ID '(' ')' #Instantiation
+    | 'new' className=ID '(' ')' #Instantiation
     | value=INT #Integer
     | value=BOOL #Boolean
     | value=ID #Identifier
@@ -61,7 +61,7 @@ type
     : 'int' '['']' #IntArray
     | 'boolean' #Bool
     | 'int' #Int
-    | ID #CustomType
+    | typeName=ID #CustomType
     ;
 
 INT : ('0' | [1-9][0-9]*);
