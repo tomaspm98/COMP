@@ -50,21 +50,18 @@ public class SimpleParser implements JmmParser {
             // Transforms tokens into a parse tree
             var parser = new pt.up.fe.comp2023.JavammParser(tokens);
 
-            if (parser.getNumberOfSyntaxErrors() > 0) {
-                throw new v4ParserException("Found " + parser.getNumberOfSyntaxErrors() + " syntax errors.", (IntStream) tokens);
-            }
-
-            Optional<JmmNode> Result = AntlrParser.parse(lex, parser, startingRule);
             // Convert ANTLR CST to JmmNode AST
-            if (parser.getNumberOfSyntaxErrors() > 0)
-                throw new Exception("Found " + parser.getNumberOfSyntaxErrors() + "  syntax errors during parsing.");
-
-            return Result
+            JmmParserResult Result = AntlrParser.parse(lex, parser, startingRule)
                     // If there were no errors and a root node was generated, create a JmmParserResult with the node
                     .map(root -> new JmmParserResult(root, Collections.emptyList(), config))
                     // If there were errors, create an error JmmParserResult without root node
                     .orElseGet(() -> JmmParserResult.newError(new Report(ReportType.WARNING, Stage.SYNTATIC, -1,
                             "There were" + parser.getNumberOfSyntaxErrors() + "syntax errors during parsing, terminating")));
+
+            if (parser.getNumberOfSyntaxErrors() > 0)
+                throw new Exception("Found " + parser.getNumberOfSyntaxErrors() + "  syntax errors during parsing.");
+
+            return Result;
 
         } catch (Exception e) {
 
