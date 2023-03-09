@@ -6,8 +6,8 @@ grammar Javamm;
 
 COMMENT: ('/*' [^*/]* '*/') | ('//' [^\n]* '\n');
 INT : ('0' | [1-9][0-9]*);
-LETTER: [a-zA-Z_$];
 ID : LETTER (LETTER | [0-9])*;
+LETTER: [a-zA-Z_$];
 BOOL: ('true' | 'false');
 
 WS : [ \t\n\r\f]+ -> skip ;
@@ -69,15 +69,6 @@ expression
     | value=ID #Identifier
     | 'this' #ClassAccess
     ;
-
-
-
-
-
-
-
-
-
 
 
 
