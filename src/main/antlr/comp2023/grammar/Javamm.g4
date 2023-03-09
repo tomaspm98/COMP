@@ -4,7 +4,7 @@ grammar Javamm;
     package pt.up.fe.comp2023;
 }
 
-COMMENT: ('/*' .* '*/') | ('//' .* '\n');
+COMMENT: ('/*' [^*/]* '*/') | ('//' [^\n]* '\n');
 INT : ('0' | [1-9][0-9]*);
 LETTER: [a-zA-Z_$];
 ID : LETTER (LETTER | [0-9])*;
