@@ -68,7 +68,6 @@ expression
     | value=BOOL #Boolean
     | value=ID #Identifier
     | 'this' #ClassAccess
-    | ID  #NormalIdentifier
     ;
 
 
