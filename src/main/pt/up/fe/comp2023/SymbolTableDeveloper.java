@@ -33,6 +33,10 @@ public class SymbolTableDeveloper implements SymbolTable {
         return imports;
     }
 
+    public void addImport(String s) {
+        imports.add(s);
+    }
+
     @Override
     public String getClassName() {
         return className;
