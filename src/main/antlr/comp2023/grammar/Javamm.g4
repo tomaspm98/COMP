@@ -14,7 +14,7 @@ classDeclaration
 
 methodDeclaration
      : ('public')? type methodName=ID '(' ( paramDeclaration (',' paramDeclaration)*)? ')' '{' (varDeclaration)* ( statement )* 'return' expression ';' '}'
-     | ('public')? 'static' 'void' methodName='main' '(' type '[' ']' paramName=ID ')' '{' (varDeclaration)* (statement)* '}'
+     | ('public')? 'static' 'void' methodName='main' '(' paramType=type '[' ']' paramName=ID ')' '{' (varDeclaration)* (statement)* '}'
      ;
 
 program
@@ -25,13 +25,13 @@ statement
     | 'if' '(' condition=expression ')' statement 'else' statement #If
     | 'while' '(' condition=expression ')' statement #WhileLoop
     | expression ';' #SimpleStatement
-    | varName=ID '=' expression ';' #SimpleAssignment // TODO CHECK IF EXISTS
-    | varName=ID '[' expression ']' '=' expression ';' #ArrayAssignment // TODO CHECK IF EXISTS
+    | varName=ID '=' assigned=expression ';' #SimpleAssignment // TODO CHECK IF EXISTS
+    | varName=ID '[' expression ']' '=' assigned=expression ';' #ArrayAssignment // TODO CHECK IF EXISTS
     ;
 
 expression
     :
-    className=expression '.' methodName=ID '('  (expression ( ',' expression)*)? ')' #MethodCall // TODO Check if class name exists and has a 'methodName' method - return type is method's return type
+    classNameExp=expression '.' methodName=ID '('  (expression ( ',' expression)*)? ')' #MethodCall // TODO Check if class name exists and has a 'methodName' method - return type is method's return type
     | array=expression '.' 'length' #ArrayLength // TODO Check if expression is an array - return type is integer
     | array=expression '[' index=expression ']' #ArrayAccess // TODO check if array is an array and if index is an integer - return type is array's type (integer)
     | '(' expression ')' #Parenthesis // TODO return type depends on nested expression
@@ -51,7 +51,7 @@ expression
     ;
 
 importDeclaration
-    : 'import' importPath=ID ('.' importPath=ID)* ';'
+    : 'import' root=modulePathFragment ('.' last=modulePathFragment)* ';'
     ;
 
 varDeclaration
@@ -67,6 +67,11 @@ type
     | 'boolean' #Bool
     | 'int' #Int
     | typeName=ID #CustomType
+    ;
+
+modulePathFragment
+    :
+    pathFragment=ID
     ;
 
 INT : ('0' | [1-9][0-9]*);

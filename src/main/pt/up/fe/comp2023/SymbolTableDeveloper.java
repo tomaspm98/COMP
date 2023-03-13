@@ -11,10 +11,9 @@ import pt.up.fe.specs.util.collections.*;
 import java.util.*;
 
 public class SymbolTableDeveloper implements SymbolTable {
-    private SpecsList<Method> methods;
-    private List<String> imports;
+    final private SpecsList<Method> methods;
+    final private List<String> imports;
     private List<Symbol> fields;
-    private List<Symbol> parameters;
     private String className;
     private String superClassName;
     private Method currentMethod;
@@ -22,9 +21,8 @@ public class SymbolTableDeveloper implements SymbolTable {
     public SymbolTableDeveloper() {
         this.methods = SpecsList.newInstance(Method.class);
         this.imports = new ArrayList<>();
-        this.className = new String();
-        this.superClassName = new String();
-        this.parameters = new ArrayList<>();
+        this.className = "";
+        this.superClassName = "";
     }
 
     @Override
@@ -65,7 +63,7 @@ public class SymbolTableDeveloper implements SymbolTable {
 
     @Override
     public List<String> getMethods() {
-        List<String> methods = this.methods.stream().map(method -> method.getName()).toList();
+        List<String> methods = this.methods.stream().map(Method::getName).toList();
         return (methods.isEmpty() ? null : methods);
     }
 
@@ -98,6 +96,9 @@ public class SymbolTableDeveloper implements SymbolTable {
         this.methods.add(new Method(methodName, type));
     }
 
+    public void addMethod(Method method) {
+        this.methods.add(method);
+    }
     @Override
     public List<Symbol> getLocalVariables(String s) {
         for (Method method : methods) {
