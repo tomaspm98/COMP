@@ -1,10 +1,8 @@
 package pt.up.fe.comp2023;
 
-import org.antlr.runtime.IntStream;
-import org.antlr.v4.parse.v4ParserException;
+;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ast.antlr.AntlrParser;
 import pt.up.fe.comp.jmm.parser.JmmParser;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
@@ -15,7 +13,6 @@ import pt.up.fe.comp.jmm.report.Stage;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Copyright 2022 SPeCS.
@@ -51,17 +48,12 @@ public class SimpleParser implements JmmParser {
             var parser = new pt.up.fe.comp2023.JavammParser(tokens);
 
             // Convert ANTLR CST to JmmNode AST
-            JmmParserResult Result = AntlrParser.parse(lex, parser, startingRule)
+            return AntlrParser.parse(lex, parser, startingRule)
                     // If there were no errors and a root node was generated, create a JmmParserResult with the node
                     .map(root -> new JmmParserResult(root, Collections.emptyList(), config))
                     // If there were errors, create an error JmmParserResult without root node
-                    .orElseGet(() -> JmmParserResult.newError(new Report(ReportType.WARNING, Stage.SYNTATIC, -1,
+                    .orElseGet(() -> JmmParserResult.newError(new Report(ReportType.ERROR, Stage.SYNTATIC, -1,
                             "There were" + parser.getNumberOfSyntaxErrors() + "syntax errors during parsing, terminating")));
-
-            if (parser.getNumberOfSyntaxErrors() > 0)
-                throw new Exception("Found " + parser.getNumberOfSyntaxErrors() + "  syntax errors during parsing.");
-
-            return Result;
 
         } catch (Exception e) {
 

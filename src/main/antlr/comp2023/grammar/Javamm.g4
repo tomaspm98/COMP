@@ -5,28 +5,68 @@ grammar Javamm;
 }
 
 WS : [ \t\n\r\f]+ -> skip ;
-COMMENT: ('/*' [^*/]* '*/') | ('//' [^\n]* '\n');
+COMMENT: (('/*' [^*/]* '*/') | ('//' [^\n]* '\n') )-> skip;
 BOOL: ('true' | 'false');
 
 classDeclaration
-    : 'class' className=ID ('extends' superClassName=ID)? '{' (varDeclaration)* (methodDeclaration)* '}'
+    : 'class' className=ID ('extends' superClassName=ID)? '{' (fieldDeclaration)* (methodDeclaration)* '}'
+    ;
+
+program
+    : (importDeclaration)* classDeclaration <EOF> ;
+
+ifTrue
+    :
+    statement
+    ;
+
+elseBlock
+    :
+    statement
+    ;
+
+  whileBlock
+    :
+    statement
     ;
 
 methodDeclaration
-     : ('public')? type methodName=ID '(' ( paramDeclaration (',' paramDeclaration)*)? ')' '{' (varDeclaration)* ( statement )* 'return' expression ';' '}'
-     | ('public')? 'static' 'void' methodName='main' '(' paramType=type '[' ']' paramName=ID ')' '{' (varDeclaration)* (statement)* '}'
+     : (modifier)* methodSymbol '(' ( argument (',' argument)*)? ')' '{' (varDeclaration)* (methodStatement)* 'return' methodReturnExpression ';' '}' #NonVoid // check if type != null
+     | (modifier)* methodSymbol '(' ( argument (',' argument)*)? ')' '{' (varDeclaration)* (methodStatement)* '}' #Void // check if type == null
      ;
 
-program
-    : (importDeclaration)* declaration=classDeclaration <EOF> ;
+methodSymbol
+    :
+    type name=ID
+    ;
+
+methodStatement
+    :
+    statement
+    ;
+
+methodReturnExpression
+    :
+    expression
+    ;
 
 statement
     : '{' ( statement )* '}' #Scope
-    | 'if' '(' condition=expression ')' statement 'else' statement #If
-    | 'while' '(' condition=expression ')' statement #WhileLoop
+    | 'if' '(' condition ')' ifTrue 'else' elseBlock #Conditional
+    | 'while' '(' condition ')' whileBlock #Conditional
     | expression ';' #SimpleStatement
-    | varName=ID '=' assigned=expression ';' #SimpleAssignment // TODO CHECK IF EXISTS
-    | varName=ID '[' expression ']' '=' assigned=expression ';' #ArrayAssignment // TODO CHECK IF EXISTS
+    | varName=ID '=' expression ';' #Assignment
+    | varName=ID '[' arrayIndex=intExpression ']' '=' expression ';' #Assignment
+    ;
+
+intExpression
+    :
+    expression
+    ;
+
+condition
+    :
+    expression
     ;
 
 expression
@@ -42,8 +82,8 @@ expression
     | arg1=expression op=('==' | '!=') arg2=expression #BoolBinaryOp // TODO check if arg1 and arg2 are of same type - return type is boolean
     | arg1=expression op='&&' arg2=expression #BoolBinaryOp // TODO check if arg1 and arg2 are booleans - return type is boolean
     | arg1=expression op='||' arg2=expression #BoolBinaryOp // TODO check if arg1 and arg2 are booleans - return type ias boolean
-    | 'new' 'int' '[' index=expression ']' #IntArrayInstantiation // TODO check if index is integer - return type is integer array
-    | 'new' className=ID '(' ')' #Instantiation // TODO check if className is in scope (check imports or main className) - return type is className
+    | 'new' typeName=ID '[' size=expression ']' #ArrayInstantiation // TODO check if size is integer - return type is typeName array
+    | 'new' name=ID '(' ')' #Instantiation // TODO check if className is in scope (check imports or main className) - return type is className
     | value=INT #Integer // TODO return type is integer
     | value=BOOL #Boolean // TODO return type is boolean
     | value=ID #Identifier // TODO check if value exists - return type is value's type.
@@ -54,19 +94,25 @@ importDeclaration
     : 'import' root=modulePathFragment ('.' last=modulePathFragment)* ';'
     ;
 
+fieldDeclaration
+    :
+    type name=ID ';'
+    ;
+
 varDeclaration
     : type name=ID ';'
     ;
 
-paramDeclaration
-    : type paramName=ID
+argument
+    : type name=ID
     ;
 
-type
-    : 'int''['']' #IntArray
-    | 'boolean' #Bool
-    | 'int' #Int
-    | typeName=ID #CustomType
+type locals[boolean isArray = false]
+    :
+      typeName='boolean' ('['']' {$isArray=true;})?
+    | typeName='int' ('['']' {$isArray=true;})?
+    | typeName='void'
+    | typeName=ID ('['']' {$isArray=true;})? // check if typeName != void
     ;
 
 modulePathFragment
@@ -74,6 +120,13 @@ modulePathFragment
     pathFragment=ID
     ;
 
-INT : ('0' | [1-9][0-9]*);
+modifier
+    :
+    value='public'
+    | value='static'
+    | value='private'
+    ;
+
 ID : LETTER (LETTER | [0-9])*;
 LETTER: [a-zA-Z_$];
+INT : ('0' | [1-9][0-9]*);

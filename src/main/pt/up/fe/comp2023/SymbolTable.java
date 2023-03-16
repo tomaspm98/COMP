@@ -2,15 +2,12 @@ package pt.up.fe.comp2023;
 
 import pt.up.fe.comp2023.node.information.Method;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
-import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
-import pt.up.fe.comp.jmm.ast.AJmmVisitor;
-import pt.up.fe.specs.util.SpecsCollections;
 import pt.up.fe.specs.util.collections.*;
 
 import java.util.*;
 
-public class SymbolTableDeveloper implements SymbolTable {
+public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable {
     final private SpecsList<Method> methods;
     final private List<String> imports;
     private List<Symbol> fields;
@@ -18,9 +15,10 @@ public class SymbolTableDeveloper implements SymbolTable {
     private String superClassName;
     private Method currentMethod;
 
-    public SymbolTableDeveloper() {
+    public SymbolTable() {
         this.methods = SpecsList.newInstance(Method.class);
         this.imports = new ArrayList<>();
+        this.fields = new ArrayList<>();
         this.className = "";
         this.superClassName = "";
     }
@@ -54,6 +52,7 @@ public class SymbolTableDeveloper implements SymbolTable {
 
     @Override
     public List<Symbol> getFields() {
+        System.out.println("Fields.length = " + this.fields.size());
         return this.fields.isEmpty() ? null : this.fields;
     }
 
@@ -65,6 +64,10 @@ public class SymbolTableDeveloper implements SymbolTable {
     public List<String> getMethods() {
         List<String> methods = this.methods.stream().map(Method::getName).toList();
         return (methods.isEmpty() ? null : methods);
+    }
+
+    public SpecsList<Method> getFullMethods() {
+        return this.methods;
     }
 
     @Override
@@ -81,7 +84,7 @@ public class SymbolTableDeveloper implements SymbolTable {
     public List<Symbol> getParameters(String s) {
         for (Method method : this.methods) {
             if (method.getName().equals(s)) {
-                return method.getParameters();
+                return method.getArguments();
             }
         }
         return null;
@@ -114,6 +117,10 @@ public class SymbolTableDeveloper implements SymbolTable {
             if (method.getName().equals(s)) return Optional.of(method);
         }
         return Optional.empty();
+    }
+
+    public void addField(Symbol field) {
+        this.fields.add(field);
     }
 
 }

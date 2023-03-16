@@ -10,7 +10,7 @@ public class Expression {
         return true; //TODO implement
     };
 
-    public Type retType() {
+    public Type getRetType() {
         return this.retType;
     }
 }
