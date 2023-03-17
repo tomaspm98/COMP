@@ -1,6 +1,5 @@
 package pt.up.fe.comp2023.visitors;
 
-import org.junit.runners.model.Statement;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
@@ -52,10 +51,6 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
 
     // UTILITY FUNCTIONS
     private Method getMethodByName(String name) {
-        System.out.println("name = " + name + ", methods = ");
-        for (Method method : table.getFullMethods()) {
-            System.out.println("Method name = " + method.getName());
-        }
         return table.getFullMethods().stream().filter(method -> method.getName().equals(name)).toList().get(0);
     }
 
@@ -126,18 +121,15 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
 
     private String dealWithMethodDeclaration(JmmNode node, String s) {
         Symbol methodSymbol = dealWithMethodSymbol(node.getChildren().stream().filter(aChild -> aChild.getKind().equals("MethodSymbol")).toList().get(0));
-        Method method = new Method(methodSymbol.getName());
+        Method method = new Method(methodSymbol.getName(), methodSymbol.getType());
         table.addMethod(method);
         for (JmmNode child : node.getChildren()) {
             if (child.getKind().equals("MethodSymbol")) {
-                System.err.println("Found child node with MethodSymbol type");
                 continue;
             }
             else {
-                System.err.println("Visiting a child");
                 visit(child, methodSymbol.getName());
             }
-
         }
         return "";
     }
@@ -170,7 +162,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         JmmNode typeNode = node.getJmmChild(0);
         Type varType = dealWithType(typeNode);
         String varName = node.get("name");
-        method.addArgument(new Symbol(varType, varName));
+        method.addVariable(new Symbol(varType, varName));
         return "";
     }
 
@@ -184,16 +176,20 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         Type methodReturnType = method.getRetType();
 
         Expression retExpr = dealWithExpression(node.getJmmChild(0));
-        if (!retExpr.getRetType().equals(methodReturnType)) {
+
+        //TODO for semanticAnalysis
+        /*if (!retExpr.getRetType().equals(methodReturnType)) {
             System.err.println("Return type does not match method's return type.");
             exit(1);
-        }
+        }*
+         */
         return "";
     }
 
     private String dealWithStatement(JmmNode node, String methodName) {
 
-        Method method = getMethodByName(methodName);
+        // TODO for semanticAnalysis
+        //Method method = getMethodByName(methodName);
 
         if (node.getKind().equals("Conditional")) {
             for (JmmNode child : node.getChildren()) {
@@ -209,10 +205,11 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
                 assignedExpressionNode = node.getJmmChild(0);
             String variableName = node.get("varName");
             Expression assignedExpression = dealWithExpression(assignedExpressionNode);
-            if (!isInScope(variableName, assignedExpression.getRetType(), method)) {
+            // TODO for semanticAnalysis
+            /*if (!isInScope(variableName, assignedExpression.getRetType(), method)) {
                 System.err.println("Trying to access a variable that is not in scope");
                 exit(1);
-            }
+            }*/
         }
         else { // Scope or SimpleStatement
             for (JmmNode child : node.getChildren()) {
@@ -234,27 +231,35 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
 
     private String dealWithCondition(JmmNode node, String s) {
         Expression expression = dealWithExpression(node.getJmmChild(0));
+
+        //TODO for semanticAnalysis
+        /*
         if (!expression.getRetType().equals(new Type("boolean", false))) {
             System.err.println("Condition expression isn't a boolean");
             exit(1);
         }
+        */
+
         return "";
     }
 
     private String dealWithIntExpression(JmmNode node, String s) {
         Expression expression = dealWithExpression(node.getJmmChild(0));
+
+        //TODO for semanticAnalysis
+        /*
         if (!expression.getRetType().equals(new Type("int", false))) {
             System.err.println("Trying to access an array with an expression of type != int");
             exit(1);
         }
+         */
         return "";
     }
 
     private Expression dealWithMethodCall(JmmNode node) {
-
         return new Expression();
     }
-    private Expression dealWithArrayLenght(JmmNode node) {
+    private Expression dealWithArrayLength(JmmNode node) {
         return new Expression();
     }
     private Expression dealWithParenthesis(JmmNode node) {
@@ -270,9 +275,16 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         return new Expression();
     }
 
-    private Expression dealWithInstantiation(JmmNode node) { // ANTLR está a ser cringe afinal precisamos  de dois tipos....
+    private Expression dealWithInstantiation(JmmNode node) {
         return new Expression();
     }
+    private Expression dealWithInteger(JmmNode node) {
+        return new Expression();
+    }
+    private Expression dealWithBoolean(JmmNode node) {
+        return new Expression();
+    }
+
     private Expression dealWithIdentifier(JmmNode node) {
         return new Expression();
     }
@@ -282,52 +294,61 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     }
 
     private Expression dealWithExpression(JmmNode node) {
-        switch(node.getKind()){
-            case "MethodCall":
-                dealWithMethodCall(node);
-                break;
-            case "ArrayLength":
-                dealWithArrayLenght(node);
-                break;
-            case "Parenthesis":
-                dealWithParenthesis(node);
-                break;
-            case "UnaryBinaryOp":
-                dealWithUnaryBinaryOp(node);
-                break;
-            case "ArithmeticBinaryOp":
-                dealWithArithmeticBinaryOp(node);
-                break;
-            case "BoolBinaryOp":
-                dealWithBoolBinaryOp(node);
-                break;
-            case "ArrayInstantiation":
-            case "Instantiation":
-                dealWithInstantiation(node);
-                break;
-
-            case "Identifier":
-                dealWithIdentifier(node);
-                break;
-            case "ClassAccess":
-                dealWithClassAccess(node);
-                break;
-            default:
-                //TODO
-                break;
+        switch (node.getKind()) {
+            case "MethodCall" -> {
+                return dealWithMethodCall(node);
+            }
+            case "ArrayLength" -> {
+                return dealWithArrayLength(node);
+            }
+            case "Parenthesis" -> {
+                return dealWithParenthesis(node);
+            }
+            case "UnaryBinaryOp" -> {
+                return dealWithUnaryBinaryOp(node);
+            }
+            case "ArithmeticBinaryOp" -> {
+                return dealWithArithmeticBinaryOp(node);
+            }
+            case "BoolBinaryOp" -> {
+                return dealWithBoolBinaryOp(node);
+            }
+            case "ArrayInstantiation", "Instantiation" -> {
+                return dealWithInstantiation(node);
+            }
+            case "Integer" -> {
+                return dealWithInteger(node);
+            }
+            case "Boolean" -> {
+                return dealWithBoolean(node);
+            }
+            case "Identifier" -> {
+                return dealWithIdentifier(node);
+            }
+            case "ClassAccess" -> {
+                return dealWithClassAccess(node);
+            }
+            default -> {
+                System.err.println("Found an expression node with unknown type: " + node.getKind());
+            }
         }
 
-        //tratar de saber se esta num statement e lidar com isso ou avaliar o tipo de expressao
-        return null;
+        // tratar de saber se esta num statement e lidar com isso ou avaliar o tipo de expressao
+
+        // just for java to stop throwing warnings... will never be reached
+        return new Expression();
     }
 
     private Type dealWithType(JmmNode node) {
         String typeName = node.get("typeName");
         boolean isArray = (boolean) node.getObject("isArray");
+        // TODO for semanticAnalysis
+        /*
         if (typeName.equals("void") && isArray) {
             System.err.println("Invalid return type: Void[]");
             exit(1);
         }
+         */
         return new Type(typeName, isArray);
     }
 

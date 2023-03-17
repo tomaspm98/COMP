@@ -52,7 +52,6 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
     @Override
     public List<Symbol> getFields() {
-        System.out.println("Fields.length = " + this.fields.size());
         return this.fields.isEmpty() ? null : this.fields;
     }
 

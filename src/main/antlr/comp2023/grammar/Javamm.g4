@@ -82,6 +82,9 @@ expression
     | arg1=expression op=('==' | '!=') arg2=expression #BoolBinaryOp // TODO check if arg1 and arg2 are of same type - return type is boolean
     | arg1=expression op='&&' arg2=expression #BoolBinaryOp // TODO check if arg1 and arg2 are booleans - return type is boolean
     | arg1=expression op='||' arg2=expression #BoolBinaryOp // TODO check if arg1 and arg2 are booleans - return type ias boolean
+    | 'new' typeName='int' '[' size=expression ']' #ArrayInstantiation
+    | 'new' typeName='boolean' '[' size=expression ']' #ArrayInstantiation
+    | 'new' typeName='String' '[' size=expression ']' #ArrayInstantiation
     | 'new' typeName=ID '[' size=expression ']' #ArrayInstantiation // TODO check if size is integer - return type is typeName array
     | 'new' name=ID '(' ')' #Instantiation // TODO check if className is in scope (check imports or main className) - return type is className
     | value=INT #Integer // TODO return type is integer
@@ -109,9 +112,10 @@ argument
 
 type locals[boolean isArray = false]
     :
-      typeName='boolean' ('['']' {$isArray=true;})?
     | typeName='int' ('['']' {$isArray=true;})?
+    | typeName='boolean' ('['']' {$isArray=true;})?
     | typeName='void'
+    | typeName='String' ('['']' {$isArray=true;})?
     | typeName=ID ('['']' {$isArray=true;})? // check if typeName != void
     ;
 
