@@ -1,5 +1,6 @@
 package pt.up.fe.comp2023.visitors;
 
+import org.junit.runners.model.Statement;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
@@ -37,6 +38,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         addVisit("ElseBlock", this::dealWithIfBranches);
         addVisit("WhileBlock", this::dealWithWhileBlock);
         addVisit("FieldDeclaration", this::dealWithFieldDeclaration);
+        addVisit("Expression", this::dealWithExpression);
     }
 
     public SymbolTableVisitor(SymbolTable table) {
@@ -95,7 +97,6 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         }
         return "";
     }
-
     private String dealWithImportDeclaration(JmmNode node, String s) {
         StringBuilder ret = new StringBuilder();
         for (JmmNode child : node.getChildren()) {
@@ -251,8 +252,31 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     }
 
 
-    private Expression dealWithExpression(JmmNode node) { // TODO THIS!!!
-        return new Expression();
+    private Expression dealWithExpression(JmmNode node, String s) {
+        Method method = getMethodByName(s);
+
+        String typeExp = node.getKind();
+
+        switch(typeExp){
+            case "MethodCall":
+                //TODO
+                break;
+            case "ArrayLength":
+                //TODO
+                break;
+            case "ArithmeticBinaryOp":
+                //TODO
+                break;
+            case "BoolBinaryOp":
+                //TODO
+                break;
+            default:
+                //TODO
+                break;
+        }
+
+        //tratar de saber se esta num statement e lidar com isso ou avaliar o tipo de expressao
+        return null;
     }
 
     private Type dealWithType(JmmNode node) {
