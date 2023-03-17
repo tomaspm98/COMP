@@ -4,8 +4,14 @@ import pt.up.fe.comp.jmm.analysis.table.Type;
 
 public class Expression {
 
-    private Type retType; // TODO maybe we don't want a type - ENUM instead? Check consequences in SymbolTableVisitor::isInScope
+    private Type retType;
 
+    public Expression() {
+        this.retType = null;
+    }
+    public Expression(Type retType) {
+        this.retType = retType;
+    }
     public boolean isCondition() {
         return true; //TODO implement
     };

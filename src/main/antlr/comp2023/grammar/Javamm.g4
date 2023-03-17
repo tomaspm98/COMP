@@ -56,7 +56,7 @@ statement
     | 'while' '(' condition ')' whileBlock #Conditional
     | expression ';' #SimpleStatement
     | varName=ID '=' expression ';' #Assignment
-    | varName=ID '[' arrayIndex=intExpression ']' '=' expression ';' #Assignment
+    | varName=ID '[' arrayIndex=intExpression ']' '=' expression ';' #ArrayAssignment
     ;
 
 intExpression
@@ -75,7 +75,7 @@ expression
     | array=expression '.' 'length' #ArrayLength // TODO Check if expression is an array - return type is integer
     | array=expression '[' index=expression ']' #ArrayAccess // TODO check if array is an array and if index is an integer - return type is array's type (integer)
     | '(' expression ')' #Parenthesis // TODO return type depends on nested expression
-    | '!' bool=expression #Negation // TODO check if bool is a boolean or BoolOp - return type is Boolean
+    | '!' bool=expression #UnaryBinaryOp // TODO check if bool is a boolean or BoolOp - return type is Boolean
     | arg1=expression op=('*' | '/' | '%') arg2=expression #ArithmeticBinaryOp // TODO check if arg1 and arg2 are integers - return type is integer
     | arg1=expression op=('+' | '-') arg2=expression #ArithmeticBinaryOp // TODO check if arg1 and arg2 are integers - return type is integer
     | arg1=expression op=('<' | '>' | '<=' | '>=') arg2=expression #BoolBinaryOp // TODO check if arg1 and arg2 are integers - return type is boolean
@@ -91,7 +91,7 @@ expression
     ;
 
 importDeclaration
-    : 'import' root=modulePathFragment ('.' last=modulePathFragment)* ';'
+    : 'import' root=modulePathFragment ('.' modulePathFragment)* ';'
     ;
 
 fieldDeclaration

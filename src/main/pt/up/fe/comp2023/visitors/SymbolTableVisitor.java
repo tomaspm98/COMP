@@ -38,7 +38,6 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         addVisit("ElseBlock", this::dealWithIfBranches);
         addVisit("WhileBlock", this::dealWithWhileBlock);
         addVisit("FieldDeclaration", this::dealWithFieldDeclaration);
-        addVisit("Expression", this::dealWithExpression);
     }
 
     public SymbolTableVisitor(SymbolTable table) {
@@ -200,7 +199,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
             for (JmmNode child : node.getChildren()) {
                 visit(child);
             }
-        } else if (node.getKind().equals("Assignment")) {
+        } else if (node.getKind().equals("Assignment") || node.getKind().equals("ArrayAssignment")) {
             JmmNode assignedExpressionNode;
             if (node.hasAttribute("arrayIndex")) {
                 dealWithIntExpression(node.getJmmChild(0), "");
@@ -251,24 +250,67 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         return "";
     }
 
+    private Expression dealWithMethodCall(JmmNode node) {
 
-    private Expression dealWithExpression(JmmNode node, String s) {
-        Method method = getMethodByName(s);
+        return new Expression();
+    }
+    private Expression dealWithArrayLenght(JmmNode node) {
+        return new Expression();
+    }
+    private Expression dealWithParenthesis(JmmNode node) {
+        return new Expression();
+    }
+    private Expression dealWithUnaryBinaryOp(JmmNode node) {
+        return new Expression();
+    }
+    private Expression dealWithArithmeticBinaryOp(JmmNode node) {
+        return new Expression();
+    }
+    private Expression dealWithBoolBinaryOp(JmmNode node) {
+        return new Expression();
+    }
 
-        String typeExp = node.getKind();
+    private Expression dealWithInstantiation(JmmNode node) { // ANTLR está a ser cringe afinal precisamos  de dois tipos....
+        return new Expression();
+    }
+    private Expression dealWithIdentifier(JmmNode node) {
+        return new Expression();
+    }
 
-        switch(typeExp){
+    private Expression dealWithClassAccess(JmmNode node) {
+        return new Expression();
+    }
+
+    private Expression dealWithExpression(JmmNode node) {
+        switch(node.getKind()){
             case "MethodCall":
-                //TODO
+                dealWithMethodCall(node);
                 break;
             case "ArrayLength":
-                //TODO
+                dealWithArrayLenght(node);
+                break;
+            case "Parenthesis":
+                dealWithParenthesis(node);
+                break;
+            case "UnaryBinaryOp":
+                dealWithUnaryBinaryOp(node);
                 break;
             case "ArithmeticBinaryOp":
-                //TODO
+                dealWithArithmeticBinaryOp(node);
                 break;
             case "BoolBinaryOp":
-                //TODO
+                dealWithBoolBinaryOp(node);
+                break;
+            case "ArrayInstantiation":
+            case "Instantiation":
+                dealWithInstantiation(node);
+                break;
+
+            case "Identifier":
+                dealWithIdentifier(node);
+                break;
+            case "ClassAccess":
+                dealWithClassAccess(node);
                 break;
             default:
                 //TODO
