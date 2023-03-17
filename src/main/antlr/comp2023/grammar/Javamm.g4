@@ -5,7 +5,7 @@ grammar Javamm;
 }
 
 WS : [ \t\n\r\f]+ -> skip ;
-COMMENT: (('/*' [^*/]* '*/') | ('//' [^\n]* '\n') )-> skip;
+COMMENT: (('/*' ~[*/]* '*/') | ('//' ~[\n]* '\n') )-> skip;
 BOOL: ('true' | 'false');
 
 classDeclaration
