@@ -122,4 +122,20 @@ public class SymbolTableTest {
     	assertEquals("Parameter 2", "boolean", parameters.get(1).getType().getName());
     	assertEquals("Parameter 3", "Parameters", parameters.get(2).getType().getName());
     }
+
+	@Test
+	public void CustomTest1() {
+		var semantics = test("symboltable/CT1.jmm",false);
+		var st = semantics.getSymbolTable();
+		var methods = st.getMethods();
+		assertEquals(6, methods.size());
+
+		var parameters = st.getParameters(methods.get(0));
+		assertEquals(0, parameters.size());
+		var newParams = st.getParameters(methods.get(4));
+		assertEquals("Parameter 1", "int", newParams.get(0).getType().getName());
+		assertEquals("Parameter 2", "boolean", newParams.get(1).getType().getName());
+		assertEquals("Parameter 3", "MethodsAndFields", newParams.get(2).getType().getName());
+
+	}
 }

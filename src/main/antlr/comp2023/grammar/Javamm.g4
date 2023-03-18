@@ -55,6 +55,7 @@ statement
     | 'if' '(' condition ')' ifTrue 'else' elseBlock #Conditional
     | 'while' '(' condition ')' whileBlock #Conditional
     | expression ';' #SimpleStatement
+    | classField '=' expression ';' #ClassFieldAssignment
     | varName=ID '=' expression ';' #Assignment
     | varName=ID '[' arrayIndex=intExpression ']' '=' expression ';' #ArrayAssignment
     ;
@@ -68,6 +69,8 @@ condition
     :
     expression
     ;
+
+
 
 expression
     :
@@ -90,7 +93,12 @@ expression
     | value=INT #Integer // TODO return type is integer
     | value=BOOL #Boolean // TODO return type is boolean
     | value=ID #Identifier // TODO check if value exists - return type is value's type.
+    | classField #ExplicitClassFieldAccess
     | 'this' #ClassAccess // TODO return type is main className
+    ;
+
+classField
+    : 'this' '.' varName=ID
     ;
 
 importDeclaration

@@ -1,0 +1,40 @@
+import io.stdin;
+import stdout;
+import aaa;
+
+class MethodsAndFields{
+	int field1;
+	boolean field2;
+	MethodsAndFields field3;
+	int[] field4;
+	boolean[] field5;
+	String field6;
+	String[] field7;
+	MethodsAndFields field8;
+	MadeUp FiElD9;
+
+	public int getField1(){
+		return field1;
+	}
+
+	public void setField1(int newField1) {
+	    this.field1 = newField1;
+	}
+
+	public boolean getField2(){
+		return field2;
+	}
+
+	public MethodsAndFields getField3(){
+		return field3;
+	}
+
+	public int[] all(int a, boolean b, MethodsAndFields maf){
+		int[] c;
+		return c;
+	}
+
+	public static void main(String[] args){
+
+	}
+}

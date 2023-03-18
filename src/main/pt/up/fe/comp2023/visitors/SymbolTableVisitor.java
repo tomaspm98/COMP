@@ -91,6 +91,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         }
         return "";
     }
+
     private String dealWithImportDeclaration(JmmNode node, String s) {
         StringBuilder ret = new StringBuilder();
         for (JmmNode child : node.getChildren()) {
@@ -112,6 +113,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         }
         return "";
     }
+
     private String dealWithFieldDeclaration(JmmNode node, String s) {
         String fieldName = node.get("name");
         Type fieldType = dealWithType(node.getJmmChild(0));
@@ -126,8 +128,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         for (JmmNode child : node.getChildren()) {
             if (child.getKind().equals("MethodSymbol")) {
                 continue;
-            }
-            else {
+            } else {
                 visit(child, methodSymbol.getName());
             }
         }
@@ -195,13 +196,16 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
             for (JmmNode child : node.getChildren()) {
                 visit(child);
             }
+        } else if (node.getKind().equals("ClassFieldAssignment")) {
+            JmmNode assignedExpressionNode = node.getJmmChild(1);
+            Expression assignedExpression = dealWithExpression(assignedExpressionNode);
+            // TODO for semanticAnalysis
         } else if (node.getKind().equals("Assignment") || node.getKind().equals("ArrayAssignment")) {
             JmmNode assignedExpressionNode;
             if (node.hasAttribute("arrayIndex")) {
                 dealWithIntExpression(node.getJmmChild(0), "");
                 assignedExpressionNode = node.getJmmChild(1);
-            }
-            else
+            } else
                 assignedExpressionNode = node.getJmmChild(0);
             String variableName = node.get("varName");
             Expression assignedExpression = dealWithExpression(assignedExpressionNode);
@@ -210,8 +214,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
                 System.err.println("Trying to access a variable that is not in scope");
                 exit(1);
             }*/
-        }
-        else { // Scope or SimpleStatement
+        } else { // Scope or SimpleStatement
             for (JmmNode child : node.getChildren()) {
                 visit(child, "");
             }
@@ -259,18 +262,23 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     private Expression dealWithMethodCall(JmmNode node) {
         return new Expression();
     }
+
     private Expression dealWithArrayLength(JmmNode node) {
         return new Expression();
     }
+
     private Expression dealWithParenthesis(JmmNode node) {
         return new Expression();
     }
+
     private Expression dealWithUnaryBinaryOp(JmmNode node) {
         return new Expression();
     }
+
     private Expression dealWithArithmeticBinaryOp(JmmNode node) {
         return new Expression();
     }
+
     private Expression dealWithBoolBinaryOp(JmmNode node) {
         return new Expression();
     }
@@ -278,9 +286,11 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     private Expression dealWithInstantiation(JmmNode node) {
         return new Expression();
     }
+
     private Expression dealWithInteger(JmmNode node) {
         return new Expression();
     }
+
     private Expression dealWithBoolean(JmmNode node) {
         return new Expression();
     }
@@ -290,6 +300,10 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     }
 
     private Expression dealWithClassAccess(JmmNode node) {
+        return new Expression();
+    }
+
+    private Expression dealWithClassField(JmmNode node) {
         return new Expression();
     }
 
@@ -327,6 +341,9 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
             }
             case "ClassAccess" -> {
                 return dealWithClassAccess(node);
+            }
+            case "ExplicitClassFieldAccess" -> {
+                return dealWithClassField(node);
             }
             default -> {
                 System.err.println("Found an expression node with unknown type: " + node.getKind());

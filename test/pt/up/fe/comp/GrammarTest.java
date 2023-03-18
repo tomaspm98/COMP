@@ -254,4 +254,19 @@ public class GrammarTest {
     public void temp() {
         TestUtils.parseVerbose("public int[] isArray(int[] arg1){}", "methodDeclaration");
     }
+
+    @Test
+    public void AssignmentFromClassField() {
+        TestUtils.parseVerbose("someField = this.field1;", "statement");
+    }
+
+    @Test
+    public void ClassFieldAssignmentToClassField() {
+        TestUtils.parseVerbose("this.someField = this.field1;", "statement");
+    }
+
+    @Test
+    public void AssignmentToClassField() {
+        TestUtils.parseVerbose("this.someField = arg4;", "statement");
+    }
 }
