@@ -5,7 +5,8 @@ grammar Javamm;
 }
 
 WS : [ \t\n\r\f]+ -> skip ;
-COMMENT: (('/*' ~[*/]* '*/') | ('//' ~[\n]* '\n') )-> skip;
+COMMENT : '/*' .*? '*/' -> skip ;
+LINE_COMMENT : '//' ~[\r\n]* -> skip ;
 BOOL: ('true' | 'false');
 
 classDeclaration
@@ -31,13 +32,18 @@ elseBlock
     ;
 
 methodDeclaration
-     : (modifier)* methodSymbol '(' ( argument (',' argument)*)? ')' '{' (varDeclaration)* (methodStatement)* 'return' methodReturnExpression ';' '}' #NonVoid // check if type != null
-     | (modifier)* methodSymbol '(' ( argument (',' argument)*)? ')' '{' (varDeclaration)* (methodStatement)* '}' #Void // check if type == null
+     : (modifier)* methodSymbol '(' ( argument (',' argument)*)? ')' '{' (varDeclaration)* (methodStatement)* 'return' methodReturnExpression ';' '}' #NonVoid
+     | (modifier)* voidMethodSymbol '(' ( argument (',' argument)*)? ')' '{' (varDeclaration)* (methodStatement)* '}' #Void
      ;
 
 methodSymbol
     :
     type name=ID
+    ;
+
+voidMethodSymbol
+    :
+    'void' name=ID
     ;
 
 methodStatement
@@ -69,8 +75,6 @@ condition
     :
     expression
     ;
-
-
 
 expression
     :
@@ -122,7 +126,6 @@ type locals[boolean isArray = false]
     :
     | typeName='int' ('['']' {$isArray=true;})?
     | typeName='boolean' ('['']' {$isArray=true;})?
-    | typeName='void'
     | typeName='String' ('['']' {$isArray=true;})?
     | typeName=ID ('['']' {$isArray=true;})? // check if typeName != void
     ;

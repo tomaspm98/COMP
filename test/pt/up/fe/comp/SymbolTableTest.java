@@ -127,6 +127,52 @@ public class SymbolTableTest {
 	public void CustomTest1() {
 		var semantics = test("symboltable/CT1.jmm",false);
 		var st = semantics.getSymbolTable();
+
+		// fields
+		var fields = st.getFields();
+		assertEquals(10, fields.size());
+
+		assertEquals("field1", fields.get(0).getName());
+		assertEquals("int", fields.get(0).getType().getName());
+		assertEquals(false, fields.get(0).getType().isArray());
+
+		assertEquals("field2", fields.get(1).getName());
+		assertEquals("boolean", fields.get(1).getType().getName());
+		assertEquals(false, fields.get(1).getType().isArray());
+
+		assertEquals("field3", fields.get(2).getName());
+		assertEquals("MethodsAndFields", fields.get(2).getType().getName());
+		assertEquals(false, fields.get(2).getType().isArray());
+
+		assertEquals("field4", fields.get(3).getName());
+		assertEquals("int", fields.get(3).getType().getName());
+		assertEquals(true, fields.get(3).getType().isArray());
+
+		assertEquals("field5", fields.get(4).getName());
+		assertEquals("boolean", fields.get(4).getType().getName());
+		assertEquals(true, fields.get(4).getType().isArray());
+
+		assertEquals("field6", fields.get(5).getName());
+		assertEquals("String", fields.get(5).getType().getName());
+		assertEquals(false, fields.get(5).getType().isArray());
+
+		assertEquals("field7", fields.get(6).getName());
+		assertEquals("String", fields.get(6).getType().getName());
+		assertEquals(true, fields.get(6).getType().isArray());
+
+		assertEquals("field8", fields.get(7).getName());
+		assertEquals("MethodsAndFields", fields.get(7).getType().getName());
+		assertEquals(false, fields.get(7).getType().isArray());
+
+		assertEquals("FiElD9", fields.get(8).getName());
+		assertEquals("MadeUp", fields.get(8).getType().getName());
+		assertEquals(false, fields.get(8).getType().isArray());
+
+		assertEquals("FiElD10", fields.get(9).getName());
+		assertEquals("MadeUp", fields.get(9).getType().getName());
+		assertEquals(true, fields.get(9).getType().isArray());
+
+
 		var methods = st.getMethods();
 		assertEquals(6, methods.size());
 

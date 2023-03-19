@@ -121,12 +121,17 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         return "";
     }
 
+    private boolean isMethodSymbol(JmmNode node) {
+        return node.getKind().equals("MethodSymbol") || node.getKind().equals("VoidMethodSymbol");
+    }
+
     private String dealWithMethodDeclaration(JmmNode node, String s) {
-        Symbol methodSymbol = dealWithMethodSymbol(node.getChildren().stream().filter(aChild -> aChild.getKind().equals("MethodSymbol")).toList().get(0));
+        Symbol methodSymbol = dealWithMethodSymbol(node.getChildren().stream().filter(this::isMethodSymbol).toList().get(0));
         Method method = new Method(methodSymbol.getName(), methodSymbol.getType());
+
         table.addMethod(method);
         for (JmmNode child : node.getChildren()) {
-            if (child.getKind().equals("MethodSymbol")) {
+            if (isMethodSymbol(child)) {
                 continue;
             } else {
                 visit(child, methodSymbol.getName());
@@ -137,7 +142,12 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
 
     private Symbol dealWithMethodSymbol(JmmNode node) {
         String name = node.get("name");
-        Type type = dealWithType(node.getJmmChild(0));
+        Type type;
+        if (node.getKind().equals("MethodSymbol"))
+            type = dealWithType(node.getJmmChild(0));
+        else
+            type = new Type("void", false);
+
         return new Symbol(type, name);
     }
 

@@ -252,7 +252,7 @@ public class GrammarTest {
 
     @Test
     public void temp() {
-        TestUtils.parseVerbose("public int[] isArray(int[] arg1){}", "methodDeclaration");
+        TestUtils.parseVerbose("public int[] isArray(int[] arg1){ return 4; }", "methodDeclaration");
     }
 
     @Test
@@ -269,4 +269,15 @@ public class GrammarTest {
     public void AssignmentToClassField() {
         TestUtils.parseVerbose("this.someField = arg4;", "statement");
     }
+
+    @Test(expected=java.lang.RuntimeException.class) // should fail
+    public void voidReturn() {
+        TestUtils.parseVerbose("public void isArray(int[] arg1){ return 4; }", "methodDeclaration");
+    }
+
+    @Test(expected=java.lang.RuntimeException.class) // should fail
+    public void nonVoidNoReturn() {
+        TestUtils.parseVerbose("public int[] isArray(int[] arg1){ int something; something = 5; }", "methodDeclaration");
+    }
+
 }

@@ -12,6 +12,7 @@ class MethodsAndFields{
 	String[] field7;
 	MethodsAndFields field8;
 	MadeUp FiElD9;
+    MadeUp[] FiElD10;
 
 	public int getField1(){
 		return field1;
@@ -35,6 +36,7 @@ class MethodsAndFields{
 	}
 
 	public static void main(String[] args){
-
+        int newVar;
+        newVar = 3;
 	}
 }
