@@ -124,9 +124,6 @@ public class SymbolTableTest {
     }
 
 	@Test
-<<<<<<< HEAD
-	public void Cona(){
-=======
 	public void CustomTest1() {
 		var semantics = test("symboltable/CT1.jmm",false);
 		var st = semantics.getSymbolTable();
