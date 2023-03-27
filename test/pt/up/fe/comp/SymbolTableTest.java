@@ -18,11 +18,11 @@ public class SymbolTableTest {
     
     static JmmSemanticsResult test(String filename, boolean fail) {
     	var semantics = getSemanticsResult(filename);
-    	if(fail) {
-    		TestUtils.mustFail(semantics.getReports());
-    	}else 	{
-       	 	TestUtils.noErrors(semantics.getReports());
-    	}
+    	if (fail) {
+			TestUtils.mustFail(semantics.getReports());
+		} else {
+			TestUtils.noErrors(semantics.getReports());
+		}
     	return semantics;
     }
     
@@ -53,13 +53,19 @@ public class SymbolTableTest {
     	var checkBool = 0;
     	var checkObj = 0;
     	System.out.println("FIELDS: "+fields);
-    	for(var f :fields){
-    		switch(f.getType().getName()) {
-    		case "MethodsAndFields": checkObj++; break;
-    		case "boolean": checkBool++; break;
-    		case "int": checkInt++;break;
-    		}
-    	};
+		for (var f : fields) {
+			switch (f.getType().getName()) {
+				case "MethodsAndFields":
+					checkObj++;
+					break;
+				case "boolean":
+					checkBool++;
+					break;
+				case "int":
+					checkInt++;
+					break;
+			}
+		}
     	assertEquals("Field of type int", 1, checkInt);
     	assertEquals("Field of type boolean", 1, checkBool);
     	assertEquals("Field of type object", 1, checkObj);
@@ -100,7 +106,7 @@ public class SymbolTableTest {
 	    			break;
 	    			
     		}
-    	};
+		}
     	assertEquals("Method with return type int", 1, checkInt);
     	assertEquals("Method with return type boolean", 1, checkBool);
     	assertEquals("Method with return type object", 1, checkObj);
@@ -182,7 +188,5 @@ public class SymbolTableTest {
 		assertEquals("Parameter 1", "int", newParams.get(0).getType().getName());
 		assertEquals("Parameter 2", "boolean", newParams.get(1).getType().getName());
 		assertEquals("Parameter 3", "MethodsAndFields", newParams.get(2).getType().getName());
->>>>>>> 1464883c9c07206f64cee9d5829a81fe3f072fc4
-
 	}
 }

@@ -1,14 +1,12 @@
 package pt.up.fe.comp2023;
 
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
-import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
 
 
 public class SemanticAnalyser extends PreorderJmmVisitor<Boolean, Boolean> {
@@ -52,7 +50,7 @@ public class SemanticAnalyser extends PreorderJmmVisitor<Boolean, Boolean> {
             List<String> imports = symboltable.getImports();
             for (int k=0;k<imports.size();k++){
                 if (imports.get(k)==name){
-                    returnSymb = (imports.get(k)).substring((imports.get(k)).lastIndexOf('.') + 1); //TODO converter para symbol
+                    //returnSymb = (imports.get(k)).substring((imports.get(k)).lastIndexOf('.') + 1); //TODO converter para symbol
                 }
             }
         }
