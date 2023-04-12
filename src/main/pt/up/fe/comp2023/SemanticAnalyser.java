@@ -1,7 +1,11 @@
 package pt.up.fe.comp2023;
 
+import pt.up.fe.comp.jmm.analysis.JmmAnalysis;
+import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
+import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
+import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.comp.jmm.report.Report;
 
 
@@ -9,16 +13,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class SemanticAnalyser extends PreorderJmmVisitor<Boolean, Boolean> {
+public abstract class SemanticAnalyser extends PreorderJmmVisitor<Integer, Integer> {
     private List<Report> reports;
-    private SymbolTable symboltable;
+    //private SymbolTable symboltable;
 
-    public SemanticAnalyser(SymbolTable symboltable){
+    public SemanticAnalyser(){
         this.reports=new ArrayList<>();
-        this.symboltable=symboltable;
     }
 
-    private Symbol getDeclaredSymbol(String name, String methodName){
+    public List<Report> getReports(){
+        return reports;
+    }
+
+    protected void addReport(Report report){
+        reports.add(report);
+    }
+
+  /*  private Symbol getDeclaredSymbol(String name, String methodName){
         Symbol returnSymb = null;
 
         List<Symbol> localVariables = symboltable.getLocalVariables(methodName);
@@ -46,14 +57,7 @@ public class SemanticAnalyser extends PreorderJmmVisitor<Boolean, Boolean> {
             }
         }
 
-        if (returnSymb == null){
-            List<String> imports = symboltable.getImports();
-            for (int k=0;k<imports.size();k++){
-                if (imports.get(k)==name){
-                    //returnSymb = (imports.get(k)).substring((imports.get(k)).lastIndexOf('.') + 1); //TODO converter para symbol
-                }
-            }
-        }
+
         return returnSymb;
 
 
@@ -68,5 +72,8 @@ public class SemanticAnalyser extends PreorderJmmVisitor<Boolean, Boolean> {
     @Override
     protected void buildVisitor() {
 
-    }
+    }*/
 }
+
+
+
