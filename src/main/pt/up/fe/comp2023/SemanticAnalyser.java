@@ -30,7 +30,7 @@ public class SemanticAnalyser extends PreorderJmmVisitor<Boolean, Boolean> {
 
         if (returnSymb==null){
             List<Symbol> fields = symboltable.getFields();
-            for (int j = 0;j<fields.size();j++){
+            for(int j = 0;j<fields.size();j++) {
                 if (fields.get(j).getName() == name){
                     returnSymb = fields.get(j);
                 }
