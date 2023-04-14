@@ -17,6 +17,6 @@ public class Optimizer implements JmmOptimization {
         SpecsList<Report> reports = SpecsList.newInstance(Report.class);
         JmmNode root = jmmSemanticsResult.getRootNode();
         OllirGenerator generator = new OllirGenerator();
-        return new OllirResult(jmmSemanticsResult, ollirCode, reports);;
+        return new OllirResult(jmmSemanticsResult, ollirCode, reports);
     }
 }
