@@ -7,13 +7,14 @@ import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.comp.jmm.report.StageResult;
 
 
 import java.util.ArrayList;
 import java.util.List;
 
 
-public abstract class SemanticAnalyser extends PreorderJmmVisitor<Integer, Integer> {
+public abstract class SemanticAnalyser extends PreorderJmmVisitor<Integer, Integer> implements StageResult {
     private List<Report> reports;
     //private SymbolTable symboltable;
 
@@ -21,6 +22,7 @@ public abstract class SemanticAnalyser extends PreorderJmmVisitor<Integer, Integ
         this.reports=new ArrayList<>();
     }
 
+    @Override
     public List<Report> getReports(){
         return reports;
     }

@@ -12,7 +12,10 @@ import pt.up.fe.comp2023.SymbolTable;
 
 import java.util.ArrayList;
 import pt.up.fe.comp.jmm.ast.*;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 
 public class MethodCallEqualsMethodDeclaration extends PreorderJmmVisitor<Integer, Integer> implements StageResult {
@@ -76,7 +79,7 @@ public class MethodCallEqualsMethodDeclaration extends PreorderJmmVisitor<Intege
         var currentNode = node;
         var father=node;
 
-        while(!currentNode.getKind().equals("MethodDeclaration") &&
+        while(!currentNode.getKind().equals("methodDeclaration") &&
                 !currentNode.getKind().equals("Program")){
             currentNode = currentNode.getJmmParent();
 
@@ -107,5 +110,15 @@ public class MethodCallEqualsMethodDeclaration extends PreorderJmmVisitor<Intege
     @Override
     public List<Report> getReports() {
         return reports;
+    }
+
+    @Override
+    public Map<String, String> getConfig() {
+        return new HashMap<String, String>();
+    }
+
+    @Override
+    protected void buildVisitor() {
+
     }
 }

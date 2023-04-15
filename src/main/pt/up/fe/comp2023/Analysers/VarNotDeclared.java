@@ -6,13 +6,14 @@ import pt.up.fe.comp.jmm.analysis.JmmAnalysis;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
+import pt.up.fe.comp.jmm.report.StageResult;
 import pt.up.fe.comp2023.SymbolTable;
 
-import java.util.ArrayList;
-import pt.up.fe.comp.jmm.ast.*;
-import java.util.List;
+import java.util.*;
 
-public class VarNotDeclared extends PreorderJmmVisitor<Integer, Integer>{
+import pt.up.fe.comp.jmm.ast.*;
+
+public class VarNotDeclared extends PreorderJmmVisitor<Integer, Integer> implements StageResult {
     private SymbolTable symbolTable;
     private List<Report>  reports;
 
@@ -66,38 +67,48 @@ public class VarNotDeclared extends PreorderJmmVisitor<Integer, Integer>{
 
 
     public boolean search( String childName , JmmNode node){
-        //var tempMethod = AstUtils.getPreviousNode(node, AstNode.METHOD_DECLARATION).get("name");
+        Optional<JmmNode> tempMethodOpt = node.getAncestor("MethodDeclaration");
 
-        var currentNode = node;
-        while(!currentNode.getKind().equals("Method Declaration") && !currentNode.getKind().equals("Program")){
-            currentNode=currentNode.getJmmParent();
+        if (tempMethodOpt.isPresent()) {
+            JmmNode tempMethod = tempMethodOpt.get();
+            String methodName = tempMethod.get("name");
+
+            for (var localVar : symbolTable.getLocalVariables(methodName)) {
+                if (localVar.getName().equals(childName)) {
+                    return true;
+                }
+            }
+
+            for (var param : symbolTable.getParameters(methodName)) {
+                if (param.getName().equals(childName)) {
+                    return true;
+                }
+            }
         }
-        if (currentNode.getKind().equals("Program")){
-            return false;
-        }
 
-        var tempMethod = currentNode.get("name");
-
-        for (var localVar: symbolTable.getLocalVariables(tempMethod)) {
-            if(localVar.getName().equals(childName))
+        for (var field : symbolTable.getFields()) {
+            if (field.getName().equals(childName)) {
                 return true;
+            }
         }
 
-        for (var param: symbolTable.getParameters(tempMethod)) {
-            if(param.getName().equals(childName))
+        for (var imports : symbolTable.getImports()) {
+            if (childName.equals(imports)) {
                 return true;
+            }
         }
 
-        for (var field : symbolTable.getFields()){
-            if(field.getName().equals(childName))
-                return true;
-        }
-
-        for (var imports : symbolTable.getImports()){
-            if(childName.equals(imports))
-                return true;
-        }
         return false;
+    }
+
+    @Override
+    public List<Report> getReports() {
+        return reports;
+    }
+
+    @Override
+    public Map<String, String> getConfig() {
+        return new HashMap<String, String>();
     }
 
     @Override
