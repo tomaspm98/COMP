@@ -5,9 +5,7 @@ import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.StageResult;
-import pt.up.fe.comp2023.Analysers.ArrayAccessOverArray;
-import pt.up.fe.comp2023.Analysers.MethodCallEqualsMethodDeclaration;
-import pt.up.fe.comp2023.Analysers.VarNotDeclared;
+import pt.up.fe.comp2023.Analysers.*;
 import pt.up.fe.comp2023.visitors.SymbolTableVisitor;
 
 import java.util.ArrayList;
@@ -27,10 +25,12 @@ public class JmmAnalyser implements JmmAnalysis {
 
         reports.addAll(symbolTableFiller.getReports());
 
-      /*  List<StageResult> analysers = Arrays.asList(
+        /*List<StageResult> analysers = Arrays.asList(
                 new ArrayAccessOverArray(symbolTable, parserResult.getRootNode()),
                 new VarNotDeclared(symbolTable, parserResult.getRootNode()),
-                new MethodCallEqualsMethodDeclaration(symbolTable, parserResult.getRootNode())
+                new MethodCallEqualsMethodDeclaration(symbolTable, parserResult.getRootNode()),
+                new AssignType(symbolTable, parserResult.getRootNode()),
+                new TypeOperation(symbolTable, parserResult.getRootNode())
         );
 
         for(var analyser : analysers){
