@@ -21,13 +21,13 @@ public class JmmAnalyser implements JmmAnalysis {
 
         var symbolTable = new SymbolTable();
 
-        var symbolTableFiller = new SymbolTableVisitor();
+        var symbolTableFiller = new SymbolTableVisitor(symbolTable);
 
-        symbolTableFiller.visit(parserResult.getRootNode(), String.valueOf(symbolTable)); // Fills the information for symbolTable
+        symbolTableFiller.visit(parserResult.getRootNode()); // Fills the information for symbolTable
 
         reports.addAll(symbolTableFiller.getReports());
 
-        List<StageResult> analysers = Arrays.asList(
+      /*  List<StageResult> analysers = Arrays.asList(
                 new ArrayAccessOverArray(symbolTable, parserResult.getRootNode()),
                 new VarNotDeclared(symbolTable, parserResult.getRootNode()),
                 new MethodCallEqualsMethodDeclaration(symbolTable, parserResult.getRootNode())
@@ -35,9 +35,9 @@ public class JmmAnalyser implements JmmAnalysis {
 
         for(var analyser : analysers){
             reports.addAll(analyser.getReports());
-        }
+        }*/
 
-        return new JmmSemanticsResult(parserResult, symbolTable,reports);
+        return new JmmSemanticsResult(parserResult, symbolTable, reports);
     }
 }
 
