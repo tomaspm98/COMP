@@ -1,13 +1,20 @@
 package pt.up.fe.comp2023;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
+import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
+import pt.up.fe.comp2023.jasmin.JasminBackender;
 import pt.up.fe.specs.util.SpecsIo;
 import pt.up.fe.specs.util.SpecsLogs;
 import pt.up.fe.specs.util.SpecsSystem;
@@ -48,7 +55,40 @@ public class Launcher {
         JmmSemanticsResult analysisResult = analyser.semanticAnalysis(parserResult);
 
         TestUtils.noErrors(analysisResult.getReports());
-        // ... add remaining stages
+
+        String code1 = SpecsIo.read(inputFile);
+
+        var ollirResult= new OllirResult(code1, new HashMap<>());
+
+        var jasminBackend = new JasminBackender();
+
+        var backendResult = jasminBackend.toJasmin(ollirResult);
+
+        Path resultsDirectory = Paths.get("generated-files/");
+
+        try {
+            if (!Files.exists(resultsDirectory)) {
+                Files.createDirectory(resultsDirectory);
+            }
+        } catch (IOException e) {
+            System.out.println("Error creating the " + resultsDirectory.toString() + " directory.");
+            return;
+        }
+
+        Path path = Paths.get("generated-files/" + backendResult.getClassName() + "/");
+
+        try {
+            FileWriter fileWriter = new FileWriter(path + ".j");
+            fileWriter.write(backendResult.getJasminCode());
+            fileWriter.close();
+            System.out.println("Jasmin file saved successfully!");
+        } catch (IOException e) {
+            System.out.println("Error while writing the .j file.");
+        }
+
+        // Generate .class file
+        backendResult.compile(path.toFile());
+        System.out.println(".class file saved successfully!");
     }
 
     private static Map<String, String> parseArgs(String[] args) {
