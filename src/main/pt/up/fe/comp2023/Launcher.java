@@ -64,6 +64,8 @@ public class Launcher {
 
         var backendResult = jasminBackend.toJasmin(ollirResult);
 
+        TestUtils.noErrors(backendResult);
+
         Path resultsDirectory = Paths.get("generated-files/");
 
         try {
@@ -71,7 +73,7 @@ public class Launcher {
                 Files.createDirectory(resultsDirectory);
             }
         } catch (IOException e) {
-            System.out.println("Error creating the " + resultsDirectory.toString() + " directory.");
+            System.out.println("Error creating the " + resultsDirectory + " directory.");
             return;
         }
 
