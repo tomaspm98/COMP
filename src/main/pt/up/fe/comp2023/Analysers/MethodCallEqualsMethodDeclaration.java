@@ -12,20 +12,20 @@ import pt.up.fe.comp2023.SymbolTable;
 
 import java.util.ArrayList;
 import pt.up.fe.comp.jmm.ast.*;
+import pt.up.fe.comp2023.visitors.SymbolTableVisitor;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
-public class MethodCallEqualsMethodDeclaration extends PreorderJmmVisitor<Integer, Integer> implements StageResult {
+public class MethodCallEqualsMethodDeclaration extends SymbolTableVisitor implements StageResult {
     private final SymbolTable symbolTable;
     private final List<Report> reports;
 
     public MethodCallEqualsMethodDeclaration(SymbolTable symbolTable, JmmNode rootNode) {
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
-        addVisit("MethodCall", this::callExpressionVisit);
         visit(rootNode);
     }
 
@@ -107,18 +107,15 @@ public class MethodCallEqualsMethodDeclaration extends PreorderJmmVisitor<Intege
         return "null";
     }
 
-    @Override
+  /*  @Override
     public List<Report> getReports() {
         return reports;
-    }
+    }*/
 
     @Override
     public Map<String, String> getConfig() {
         return new HashMap<String, String>();
     }
 
-    @Override
-    protected void buildVisitor() {
 
-    }
 }

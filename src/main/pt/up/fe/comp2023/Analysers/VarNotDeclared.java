@@ -12,15 +12,16 @@ import pt.up.fe.comp2023.SymbolTable;
 import java.util.*;
 
 import pt.up.fe.comp.jmm.ast.*;
+import pt.up.fe.comp2023.visitors.SymbolTableVisitor;
 
-public class VarNotDeclared extends PreorderJmmVisitor<Integer, Integer> implements StageResult {
+public class VarNotDeclared extends SymbolTableVisitor implements StageResult {
     private SymbolTable symbolTable;
     private List<Report>  reports;
 
     public VarNotDeclared(SymbolTable symbolTable, JmmNode rootNode) {
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
-        addVisit("Identifier", this::idVisit);
+        buildVisitor();
         visit(rootNode);
     }
     public Integer idVisit(JmmNode node, Integer dummy) {
@@ -101,18 +102,15 @@ public class VarNotDeclared extends PreorderJmmVisitor<Integer, Integer> impleme
         return false;
     }
 
-    @Override
+   /* @Override
     public List<Report> getReports() {
         return reports;
     }
-
+*/
     @Override
     public Map<String, String> getConfig() {
         return new HashMap<String, String>();
     }
 
-    @Override
-    protected void buildVisitor() {
 
-    }
 }

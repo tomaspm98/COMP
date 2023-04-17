@@ -7,13 +7,14 @@ import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
 import pt.up.fe.comp.jmm.report.StageResult;
 import pt.up.fe.comp2023.SymbolTable;
+import pt.up.fe.comp2023.visitors.SymbolTableVisitor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TypeOperation extends PreorderJmmVisitor<Integer, Integer> implements StageResult {
+public class TypeOperation extends SymbolTableVisitor implements StageResult {
 
     private SymbolTable symbolTable;
     private List<Report> reports;
@@ -21,7 +22,7 @@ public class TypeOperation extends PreorderJmmVisitor<Integer, Integer> implemen
     public TypeOperation(SymbolTable symbolTable, JmmNode rootNode) {
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
-        addVisit("BoolBinaryOp", this::operationVisit);
+        buildVisitor();
         visit(rootNode);
     }
     public Integer operationVisit(JmmNode node, Integer dummy) {
@@ -113,18 +114,15 @@ public class TypeOperation extends PreorderJmmVisitor<Integer, Integer> implemen
         return "null";
     }
 
-    @Override
+   /* @Override
     public List<Report> getReports() {
         return reports;
-    }
+    }*/
 
     @Override
     public Map<String, String> getConfig() {
         return new HashMap<String, String>();
     }
 
-    @Override
-    protected void buildVisitor() {
 
-    }
 }

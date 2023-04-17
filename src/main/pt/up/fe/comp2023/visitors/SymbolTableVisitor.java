@@ -270,7 +270,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         return nameNode.get("name");
     }
 
-    public SpecsList<Report> getReports() {
+    public List<Report> getReports() {
         return reports;
     }
 }

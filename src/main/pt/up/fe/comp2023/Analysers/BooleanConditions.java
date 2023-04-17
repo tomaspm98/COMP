@@ -7,13 +7,14 @@ import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
 import pt.up.fe.comp.jmm.report.StageResult;
 import pt.up.fe.comp2023.SymbolTable;
+import pt.up.fe.comp2023.visitors.SymbolTableVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
-public class BooleanConditions extends PreorderJmmVisitor<Integer, Integer> implements StageResult {
+public class BooleanConditions extends SymbolTableVisitor implements StageResult {
 
     private SymbolTable symbolTable;
     private List<Report> reports;
@@ -21,7 +22,7 @@ public class BooleanConditions extends PreorderJmmVisitor<Integer, Integer> impl
     public BooleanConditions(SymbolTable symbolTable, JmmNode rootNode) {
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
-        addVisit("Conditional", this::checkConditionExpression);
+        buildVisitor();
         visit(rootNode);
     }
 
@@ -84,18 +85,17 @@ public class BooleanConditions extends PreorderJmmVisitor<Integer, Integer> impl
         return "";
     }
 
-    @Override
+    /*@Override
     public List<Report> getReports() {
         return reports;
     }
-
+*/
     @Override
     public Map<String, String> getConfig() {
         return new HashMap<String, String>();
     }
 
-    @Override
-    protected void buildVisitor() {
-    }
+
+
 }
 
