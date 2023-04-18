@@ -9,6 +9,7 @@ import pt.up.fe.comp2023.SymbolTable;
 import pt.up.fe.comp2023.node.information.Method;
 import pt.up.fe.specs.util.collections.SpecsList;
 
+import java.util.List;
 import java.util.Optional;
 
 public class OllirGenerator extends AJmmVisitor<String, String> {
@@ -79,8 +80,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
 
         if (methodNode.getKind().equals("Void"))
             ret = methodNode.getObject("VoidMethodSymbol", JmmNode.class).get("name");
-        else
-            ret = methodNode.getObject("MethodSymbol", JmmNode.class).get("name");
+        else ret = methodNode.getObject("MethodSymbol", JmmNode.class).get("name");
 
         return ret;
     }
@@ -139,13 +139,19 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             }
         }
 
-        ret.append(").")
-                .append(this.jmmTypeToOllirType(method.getRetType().getName()))
-                .append(" {\n");
+        ret.append(").").append(this.jmmTypeToOllirType(method.getRetType().getName())).append(" {\n");
 
-        //TODO finish
+        List<JmmNode> methodStatements = node.getChildren().stream().filter((child) -> child.getKind().equals("MethodStatement")).map((child) -> child.getJmmChild(0)) // get statement inside methodStatement
+                .toList();
 
+        if (node.getKind().equals("NonVoid")) {
+            ret.append("ret.");
+            JmmNode retExpressionNode = node.getChildren().get(node.getNumChildren() - 1);
+            //get return expression type and append;
 
+            //append expression and ret type;
+        }
+        ret.append("}\n\n");
 
 
         return ret.toString();
@@ -167,6 +173,69 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         }
 
         ret.append(jmmTypeToOllirType(node.get("typeName")));
+        return ret.toString();
+    }
+
+    private String dealWithScopeStatement(JmmNode node, String __) {
+        StringBuilder ret = new StringBuilder("{\n");
+        for (JmmNode child : node.getChildren()) {
+            ret.append("    ").append(visit(child)).append("\n");
+        }
+        ret.append("}\n");
+        return ret.toString();
+    }
+
+    private String dealWithConditionalStatement(JmmNode node, String __) {
+        StringBuilder ret = new StringBuilder();
+
+        // BAD CODE !! If and While should have different types, but as to not interfere with other branches this is a patchwork solution
+        if (node.getNumChildren() == 3) { // if
+            ret.append("if (");
+            ret.append(visit(node.getJmmChild(0))).append(") ")
+                    .append(visit(node.getJmmChild(1)))
+                    .append("\nelse ")
+                    .append(visit(node.getJmmChild(2)))
+                    .append("\n");
+        } else { // while
+
+        }
+
+         ret.toString();
+    }
+
+    private String dealWithCondition(JmmNode node, String __) {
+        return visit(node.getJmmChild(0));
+    }
+
+    private String dealWithIfTrue(JmmNode node, String __) {
+        return visit(node.getJmmChild(0));
+    }
+
+    private String dealWithElseBlock(JmmNode node, String __) {
+        return visit(node.getJmmChild(0));
+    }
+
+    private String dealWithSimpleStatement(JmmNode node, String __) {
+        StringBuilder ret = new StringBuilder();
+
+        return ret.toString();
+    }
+
+    private String dealWithClassFieldAssignmentStatement(JmmNode node, String __) {
+        StringBuilder ret = new StringBuilder();
+
+        return ret.toString();
+    }
+
+    private String dealWithAssignmentStatement(JmmNode node, String __) {
+        StringBuilder ret = new StringBuilder();
+
+        return ret.toString();
+    }
+
+    private String dealWithArrayAssignmentStatement(JmmNode node, String __) {
+        StringBuilder ret = new StringBuilder();
+
         return ret.toString();
     }
 }
