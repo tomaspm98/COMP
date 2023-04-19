@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ArrayAccessOverArray extends SymbolTableVisitor implements StageResult {
+public class ArrayAccessOverArray extends SymbolTableVisitor implements StageResult{
     private SymbolTable symbolTable;
     private List<Report> reports;
 
@@ -136,17 +136,13 @@ public class ArrayAccessOverArray extends SymbolTableVisitor implements StageRes
         this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.valueOf(node.get("line")), Integer.valueOf(node.get("col")), "Incompatible types: cannot add an array and an integer"));
     }
 
-    /*@Override
-    public List<Report> getReports() {
-        return reports;
-    }*/
-
     @Override
     public Map<String, String> getConfig() {
-        return new HashMap<String, String>();
+        return new HashMap<>();
     }
 
-
-
-
+    @Override
+    public List<Report> getReports() {
+        return reports;
+    }
 }

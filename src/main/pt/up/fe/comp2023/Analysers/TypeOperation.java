@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TypeOperation extends SymbolTableVisitor implements StageResult {
+public class TypeOperation extends SymbolTableVisitor implements StageResult{
 
     private SymbolTable symbolTable;
     private List<Report> reports;
@@ -114,15 +114,13 @@ public class TypeOperation extends SymbolTableVisitor implements StageResult {
         return "null";
     }
 
-   /* @Override
+    @Override
     public List<Report> getReports() {
         return reports;
-    }*/
+    }
 
     @Override
     public Map<String, String> getConfig() {
-        return new HashMap<String, String>();
+        return null;
     }
-
-
 }

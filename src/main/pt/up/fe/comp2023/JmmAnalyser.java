@@ -2,6 +2,7 @@ package pt.up.fe.comp2023;
 
 import pt.up.fe.comp.jmm.analysis.JmmAnalysis;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
+import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.Stage;
@@ -26,7 +27,7 @@ public class JmmAnalyser implements JmmAnalysis {
 
         reports.addAll(symbolTableFiller.getReports());
 
-        List<StageResult> analysers = Arrays.asList(
+        List<SymbolTableVisitor> analysers = Arrays.asList(
                 new ArrayAccessOverArray(symbolTable, parserResult.getRootNode()),
                 new VarNotDeclared(symbolTable, parserResult.getRootNode()),
                 new MethodCallEqualsMethodDeclaration(symbolTable, parserResult.getRootNode()),
@@ -35,6 +36,7 @@ public class JmmAnalyser implements JmmAnalysis {
         );
 
         for(var analyser : analysers){
+            //analyser.visit(parserResult.getRootNode());
             reports.addAll(analyser.getReports());
         }
 

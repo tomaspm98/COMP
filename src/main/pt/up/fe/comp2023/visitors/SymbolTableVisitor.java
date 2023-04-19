@@ -18,7 +18,7 @@ import java.util.List;
 public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     private final SymbolTable table;
 
-    private SpecsList<Report> reports;
+    private List<Report> reports;
 
     @Override
     protected void buildVisitor() {
@@ -272,5 +272,9 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
 
     public List<Report> getReports() {
         return reports;
+    }
+
+    public void addReport(Report report) {
+        reports.add(report);
     }
 }
