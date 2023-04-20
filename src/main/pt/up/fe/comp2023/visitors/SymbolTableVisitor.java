@@ -214,11 +214,11 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
             } else
                 assignedExpressionNode = node.getJmmChild(0);
             Expression assignedExpression = dealWithExpression(assignedExpressionNode);
-        } else { // Scope or SimpleStatement
+        } /*else { // Scope or SimpleStatement
             for (JmmNode child : node.getChildren()) {
                 visit(child, "");
             }
-        }
+        }*/
         return "";
     }
 
@@ -244,7 +244,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
 
     private Expression dealWithExpression(JmmNode node) {
         switch (node.getKind()) {
-            case "MethodCall", "ArrayLength", "Parenthesis", "UnaryBinaryOp", "ArithmeticBinaryOp",
+            case  "MethodCall", "ArrayLength", "Parenthesis", "UnaryBinaryOp", "ArithmeticBinaryOp",
                     "BoolBinaryOp", "ArrayInstantiation", "Instantiation", "Integer", "Boolean",
                     "Identifier", "ClassAccess", "ExplicitClassFieldAccess" -> {
                 return new Expression();

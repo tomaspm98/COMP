@@ -167,7 +167,7 @@ public class AssignType extends SymbolTableVisitor implements StageResult{
             // if it's an array[] it produces an id as child 0, just return its type
             return typeCheck(node.getJmmChild(0));
         }
-        if (myKind.equals("MethodDeclaration")) {
+        if (myKind.equals("methodDeclaration")) {
             return "null"; // TODO: implement method
         }
 
