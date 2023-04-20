@@ -244,7 +244,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
 
     private Expression dealWithExpression(JmmNode node) {
         switch (node.getKind()) {
-            case  "ArrayLength", "Parenthesis", "UnaryBinaryOp", "ArithmeticBinaryOp",
+            case  "MethodCall", "ArrayLength", "Parenthesis", "UnaryBinaryOp", "ArithmeticBinaryOp",
                     "BoolBinaryOp", "ArrayInstantiation", "Instantiation", "Integer", "Boolean",
                     "Identifier", "ClassAccess", "ExplicitClassFieldAccess" -> {
                 return new Expression();
