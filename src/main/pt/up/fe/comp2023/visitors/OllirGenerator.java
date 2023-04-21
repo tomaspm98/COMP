@@ -37,7 +37,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
 
     // Utility functions
 
-    private String jmmTypeToOllirType(String jmmType) {
+    public static String jmmTypeToOllirType(String jmmType) {
         switch (jmmType) {
             case "int" -> {
                 return "i32";
@@ -51,6 +51,25 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         }
     }
 
+    public static String jmmTypeToOllirType(Type jmmType) {
+        StringBuilder ret = new StringBuilder();
+        if (jmmType.isArray()) {
+            ret.append("array.");
+        }
+        switch (jmmType.getName()) {
+            case "int" -> {
+                ret.append("i32");
+            }
+            case "boolean" -> {
+                ret.append("bool");
+            }
+            default -> {
+                ret.append(jmmType.getName());
+            }
+        }
+        return ret.toString();
+    }
+
     private String jmmSymbolToOllirSymbol(JmmNode node) {
         StringBuilder ret = new StringBuilder();
 
@@ -61,7 +80,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         return ret.toString();
     }
 
-    private String jmmSymbolToOllirSymbol(Symbol symbol) {
+    public static String jmmSymbolToOllirSymbol(Symbol symbol) {
         String name = symbol.getName();
         Type type = symbol.getType();
 
@@ -132,14 +151,14 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         for (int i = 0; i < method.getArguments().size(); i++) {
             Symbol argument = method.getArguments().get(i);
 
-            ret.append(this.jmmSymbolToOllirSymbol(argument));
+            ret.append(jmmSymbolToOllirSymbol(argument));
 
             if (i != method.getModifiers().size() - 1) { // is not last element
                 ret.append(", ");
             }
         }
 
-        ret.append(").").append(this.jmmTypeToOllirType(method.getRetType().getName())).append(" {\n");
+        ret.append(").").append(jmmTypeToOllirType(method.getRetType().getName())).append(" {\n");
 
         List<JmmNode> methodStatements = node.getChildren().stream().filter((child) -> child.getKind().equals("MethodStatement")).map((child) -> child.getJmmChild(0)) // get statement inside methodStatement
                 .toList();
@@ -197,10 +216,13 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
                     .append(visit(node.getJmmChild(2)))
                     .append("\n");
         } else { // while
-
+            ret.append("while (");
+            ret.append(visit(node.getJmmChild(0))).append(") ")
+                    .append(visit(node.getJmmChild(1)))
+                    .append("\n");
         }
 
-         ret.toString();
+        return ret.toString();
     }
 
     private String dealWithCondition(JmmNode node, String __) {
@@ -216,26 +238,37 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
     }
 
     private String dealWithSimpleStatement(JmmNode node, String __) {
-        StringBuilder ret = new StringBuilder();
-
-        return ret.toString();
+        return visit(node.getJmmChild(0)) + ";\n";
     }
 
     private String dealWithClassFieldAssignmentStatement(JmmNode node, String __) {
         StringBuilder ret = new StringBuilder();
 
+        String fieldName = node.getJmmChild(0).get("varName");
+
+        String fieldType;
+
+        //TODO create method for this in symbolTable
+        for (Symbol symbol : symbolTable.getFields()) {
+            if (symbol.getName().equals(fieldName)) {
+                fieldType = jmmTypeToOllirType(symbol.getType());
+                break;
+            }
+        }
+
+        ExpressionVisitor eVisitor = new ExpressionVisitor(this.symbolTable);
+
+
         return ret.toString();
     }
 
     private String dealWithAssignmentStatement(JmmNode node, String __) {
-        StringBuilder ret = new StringBuilder();
 
-        return ret.toString();
+        return "";
     }
 
     private String dealWithArrayAssignmentStatement(JmmNode node, String __) {
-        StringBuilder ret = new StringBuilder();
 
-        return ret.toString();
+        return "";
     }
 }

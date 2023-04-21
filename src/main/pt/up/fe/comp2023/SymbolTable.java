@@ -3,6 +3,8 @@ package pt.up.fe.comp2023;
 import pt.up.fe.comp2023.node.information.Method;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
+import pt.up.fe.comp2023.utils.SymbolInfo;
+import pt.up.fe.comp2023.utils.SymbolPosition;
 import pt.up.fe.specs.util.collections.*;
 
 import java.util.*;
@@ -120,6 +122,36 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
     public void addField(Symbol field) {
         this.fields.add(field);
+    }
+
+    public SymbolInfo getMostSpecificSymbol(String methodName, String symbolName) {
+        Optional<Method> methodOpt = this.getMethodTry(methodName);
+
+        if (methodOpt.isEmpty()) {
+            System.err.println("Tried to find method with name '" + methodName + "' but it wasn't found");
+            return null;
+        }
+
+        Method method = methodOpt.get();
+
+        for (Symbol symbol : method.getVariables()) {
+            if (symbol.getName().equals(symbolName)) return new SymbolInfo(symbol, SymbolPosition.LOCAL);
+        }
+
+        for (Symbol symbol : method.getArguments()) {
+            if (symbol.getName().equals(symbolName)) return new SymbolInfo(symbol, SymbolPosition.PARAM);
+        }
+
+        for (Symbol symbol : this.fields) {
+            if (symbol.getName().equals(symbolName)) return new SymbolInfo(symbol, SymbolPosition.FIELD);
+        }
+
+
+        System.err.println("Tried to find variable with name '" + symbolName + "' but it wasn't found.");
+        return null;
+
+
+
     }
 
 }
