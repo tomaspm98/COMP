@@ -32,7 +32,8 @@ public class JmmAnalyser implements JmmAnalysis {
                 new VarNotDeclared(symbolTable, parserResult.getRootNode()),
                 new MethodCallEqualsMethodDeclaration(symbolTable, parserResult.getRootNode()),
                 new AssignType(symbolTable, parserResult.getRootNode()),
-                new TypeOperation(symbolTable, parserResult.getRootNode())
+                new TypeOperation(symbolTable, parserResult.getRootNode()),
+                new ArrayInOperation(symbolTable, parserResult.getRootNode())
         );
 
         for(var analyser : analysers){
