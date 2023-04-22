@@ -56,6 +56,15 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         if (jmmType.isArray()) {
             ret.append("array.");
         }
+        return getString(jmmType, ret);
+    }
+
+    public static String getArrayOllirType(Type jmmType) {
+        StringBuilder ret = new StringBuilder();
+        return getString(jmmType, ret);
+    }
+
+    private static String getString(Type jmmType, StringBuilder ret) {
         switch (jmmType.getName()) {
             case "int" -> {
                 ret.append("i32");
@@ -204,7 +213,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         return ret.toString();
     }
 
-    private String dealWithConditionalStatement(JmmNode node, String __) {
+    private String dealWithConditionalStatement(JmmNode node, String __) { //TODO add GOTOs
         StringBuilder ret = new StringBuilder();
 
         // BAD CODE !! If and While should have different types, but as to not interfere with other branches this is a patchwork solution

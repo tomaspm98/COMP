@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ExpressionVisitorInformation {
+
+    private Boolean shouldAppendType;
     private Integer auxVariables;
     private List<String> auxLines;
 
@@ -15,7 +17,17 @@ public class ExpressionVisitorInformation {
         this.auxLines = new ArrayList<>();
         this.resultName = "";
         this.ollirType = "";
+        this.shouldAppendType = true;
     }
+
+    public ExpressionVisitorInformation(Boolean shouldAppendType) {
+        this.auxVariables = 0;
+        this.auxLines = new ArrayList<>();
+        this.resultName = "";
+        this.ollirType = "";
+        this.shouldAppendType = shouldAppendType;
+    }
+
 
     public Integer getAuxVariables() {
         return auxVariables;
@@ -43,7 +55,10 @@ public class ExpressionVisitorInformation {
     }
 
     public String getResultNameAndType() {
-        return resultName + "." + ollirType;
+        if (this.shouldAppendType)
+            return resultName + "." + ollirType;
+        else
+            return resultName;
     }
 
     public String getOllirType() {
@@ -62,4 +77,11 @@ public class ExpressionVisitorInformation {
         this.resultName = resultName;
     }
 
+    public Boolean getShouldAppendType() {
+        return shouldAppendType;
+    }
+
+    public void setShouldAppendType(Boolean shouldAppendType) {
+        this.shouldAppendType = shouldAppendType;
+    }
 }
