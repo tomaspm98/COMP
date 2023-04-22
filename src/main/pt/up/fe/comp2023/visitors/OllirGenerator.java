@@ -8,6 +8,7 @@ import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp2023.SymbolTable;
 import pt.up.fe.comp2023.node.information.Method;
 import pt.up.fe.comp2023.utils.ExpressionVisitorInformation;
+import pt.up.fe.comp2023.utils.SymbolInfo;
 import pt.up.fe.specs.util.collections.SpecsList;
 
 import java.util.List;
@@ -133,6 +134,47 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         }
 
         return ret.toString();
+    }
+
+    public static String getOllirVariableNameAndType(SymbolTable symbolTable, Method method, String jmmVarName) {
+        SymbolInfo symbolInfo = symbolTable.getMostSpecificSymbol(method.getName(), jmmVarName);
+
+
+
+        switch(symbolInfo.getSymbolPosition()) {
+            case LOCAL -> {
+                for (Symbol local : method.getVariables()) {
+                    if (local.getName().equals(jmmVarName)) {
+                        return jmmVarName + "." + OllirGenerator.jmmTypeToOllirType(local.getType());
+                    }
+                }
+            }
+            case PARAM -> {
+                for (int i = 0; i < method.getArguments().size(); i++) {
+                    Symbol param = method.getArguments().get(i);
+                    if (param.getName().equals(jmmVarName)) {
+                        return "$" + i + "." + jmmVarName + "." + OllirGenerator.jmmTypeToOllirType(local.getType());
+                    }
+                }
+
+            }
+            case FIELD -> {
+                for (Symbol field : symbolTable.getFields()) {
+                    if (field.getName().equals(value)) {
+                        //TODO
+                        return jmmVarName + "." + OllirGenerator.jmmTypeToOllirType(local.getType());
+                        //TODO
+                        String varAux = getNewAuxVariable();
+                        String fieldType = OllirGenerator.jmmTypeToOllirType(symbolInfo.getSymbol().getType());
+                        String auxLine = varAux + "." + fieldType + " :=." + fieldType + " getfield(this, " + field.getName() + "." + fieldType + ")." + fieldType;
+                        ret.addAuxLine(auxLine);
+                        ret.setResultName(varAux);
+                        ret.setOllirType(fieldType);
+                    }
+                }
+            }
+        }
+
     }
 
 
@@ -298,7 +340,27 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         return exprInfoToString(info) + "putfield(this, " + fieldName + "." + fieldType + ", " + info.getResultNameAndType() + ").V;\n";
     }
 
-    private String dealWithAssignmentStatement(JmmNode node, String __) {
+    // Please do not read this code. This is the worst code I have ever written.
+    private String dealWithAssignmentStatement(JmmNode node, String methodName) {
+
+        String varName = node.get("varName");
+
+        JmmNode exprNode =  node.getJmmChild(0);
+
+        Optional<Method> optMethod = this.symbolTable.getMethodTry(methodName);
+
+        if (optMethod.isEmpty()) {
+            //TODO maybe add report
+            System.err.println("Tried to search for method '" + methodName + "' but it wasn't found.");
+            return null;
+        }
+
+        String ollirVarName = getOllirVariableName(Method method, String jmmVarName);
+
+        ExpressionVisitor expressionVisitor = new ExpressionVisitor(this.symbolTable, this.tempVariables);
+        ExpressionVisitorInformation info = expressionVisitor.visit(exprNode);
+        String ret = exprAuxInfoToString(info) + varName + "." + ;
+
 
         return "";
     }
