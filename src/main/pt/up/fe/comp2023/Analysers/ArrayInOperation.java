@@ -31,10 +31,11 @@ public class ArrayInOperation extends SymbolTableVisitor implements StageResult 
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();
+        addVisit("BinOpVisit", this::binOpVisit);
         visit(rootNode);
     }
 
-    public Integer binOpVisit(JmmNode node, Integer dummy) {
+    public String binOpVisit(JmmNode node, String dummy) {
         List<JmmNode> children = new ArrayList<>();
         children.add(node.getJmmChild(0));
         children.add(node.getJmmChild(1));
@@ -58,7 +59,7 @@ public class ArrayInOperation extends SymbolTableVisitor implements StageResult 
                 }
             }
         }
-        return 0;
+        return "";
     }
 
     private boolean isNodeIdArray(JmmNode childNode, String tempMethod, SymbolTable symbolTable) {

@@ -23,9 +23,10 @@ public class TypeOperation extends SymbolTableVisitor implements StageResult{
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();
+        addVisit("Operation", this::operationVisit);
         visit(rootNode);
     }
-    public Integer operationVisit(JmmNode node, Integer dummy) {
+    public String operationVisit(JmmNode node, String dummy) {
         String nodeValue = node.get("op");
 
         String res = _typeCheck(node);
@@ -36,7 +37,7 @@ public class TypeOperation extends SymbolTableVisitor implements StageResult{
                     "Operation with wrong types"));
         }
 
-        return 0;
+        return "";
     }
 
     public String getIdType(JmmNode node){

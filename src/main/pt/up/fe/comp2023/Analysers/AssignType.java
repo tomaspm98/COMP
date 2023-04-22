@@ -23,10 +23,11 @@ public class AssignType extends SymbolTableVisitor implements StageResult{
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();
+        addVisit("Assignmet",this::assignVisit);
         visit(rootNode);
     }
 
-    public Integer assignVisit(JmmNode node, Integer dummy) {
+    public String assignVisit(JmmNode node, String dummy) {
         JmmNode leftChild = node.getJmmChild(0);
         JmmNode rightChild = node.getJmmChild(1);
 
@@ -43,10 +44,10 @@ public class AssignType extends SymbolTableVisitor implements StageResult{
         //System.out.println("RIGHT = " + rightIdType);
 
         if (leftIdType.equals("import")) {
-            return 0;
+            return "";
         }
         if (rightIdType.equals("import")) {
-            return 0;
+            return "";
         }
 
         if (rightIdType.equals("new")){
@@ -82,7 +83,7 @@ public class AssignType extends SymbolTableVisitor implements StageResult{
                     "Assignment with wrong types"));
         }
 
-        return 0;
+        return "";
     }
 
     public Type getIdType(JmmNode node){
@@ -181,6 +182,6 @@ public class AssignType extends SymbolTableVisitor implements StageResult{
 
     @Override
     public Map<String, String> getConfig() {
-        return null;
+        return new HashMap<>();
     }
 }

@@ -23,10 +23,11 @@ public class BooleanConditions extends SymbolTableVisitor implements StageResult
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();
+        addVisit("Condition", this::checkConditionExpression);
         visit(rootNode);
     }
 
-    public Integer checkConditionExpression(JmmNode node, Integer dummy) {
+    public String checkConditionExpression(JmmNode node, String dummy) {
         JmmNode conditionNode = node.getChildren().get(0);
         String expressionType = getExpressionType(conditionNode);
 
@@ -35,7 +36,7 @@ public class BooleanConditions extends SymbolTableVisitor implements StageResult
                     Integer.valueOf(node.get("line")), Integer.valueOf(node.get("col")),
                     "Expression in the condition must return a boolean value"));
         }
-        return 0;
+        return "";
     }
 
     private String getExpressionType(JmmNode node) {

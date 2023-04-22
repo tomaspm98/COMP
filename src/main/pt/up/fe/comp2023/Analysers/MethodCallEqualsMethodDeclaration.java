@@ -27,10 +27,11 @@ public class MethodCallEqualsMethodDeclaration extends SymbolTableVisitor implem
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();
+        addVisit("ExpressionVisit", this::callExpressionVisit);
         visit(rootNode);
     }
 
-    Integer callExpressionVisit(JmmNode node, Integer dummy) {
+    private String callExpressionVisit(JmmNode node, String dummy) {
         boolean exists = exists(node);
         if (!exists) {
             this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
@@ -38,7 +39,7 @@ public class MethodCallEqualsMethodDeclaration extends SymbolTableVisitor implem
                     "Method doesn't exist."));
         }
 
-        return 0;
+        return "";
     }
 
     private boolean exists(JmmNode node) {

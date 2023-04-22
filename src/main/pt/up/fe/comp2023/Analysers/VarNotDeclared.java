@@ -15,19 +15,21 @@ public class VarNotDeclared extends SymbolTableVisitor implements StageResult {
     private List<Report> reports;
 
     public VarNotDeclared(SymbolTable symbolTable, JmmNode rootNode) {
+        super(symbolTable);
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();
+        addVisit("Variable", this::idVisit);
         visit(rootNode);
     }
 
-    public Integer idVisit(JmmNode node, Integer dummy) {
+    public String idVisit(JmmNode node, String dummy) {
         var father = node.getJmmParent();
 
         if (father.getKind().equals("importDeclaration")
                 || father.getKind().equals("varDeclaration")
                 || father.getKind().equals("fieldDeclaration")) {
-            return 0;
+            return "";
         }
 
         if (father.getKind().equals("MethodCall")) {
@@ -35,31 +37,31 @@ public class VarNotDeclared extends SymbolTableVisitor implements StageResult {
 
             if (firstChild.getKind().equals("Integer") || firstChild.getKind().equals("Boolean")) {
                 if (symbolTable.getMethods().contains(father.getJmmChild(1).get("name")))
-                    return 0;
+                    return "";
                 else {
                     this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.valueOf(node.get("line")), Integer.valueOf(node.get("col")),
                             "Var is not declared"));
-                    return 0;
+                    return "";
                 }
             }
 
             if (search(firstChild.get("name"), node)) {
-                return 0;
+                return "";
             }
 
         } else {
             if (search(node.get("name"), node)) {
-                return 0;
+                return "";
             }
         }
 
         if (symbolTable.getClassName().equals(node.get("name")))
-            return 0;
+            return "";
 
         this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.valueOf(node.get("line")), Integer.valueOf(node.get("col")),
                 "Var is not declared"));
 
-        return 0;
+        return "";
     }
 
     public boolean search(String childName, JmmNode node) {
@@ -106,12 +108,5 @@ public class VarNotDeclared extends SymbolTableVisitor implements StageResult {
         return new HashMap<>();
     }
 
-    public String visit(JmmNode node, String s) {
-        if (node.getKind().equals("Identifier")) {
-            idVisit(node, 0);
-        } else {
-            super.visit(node, s);
-        }
-        return "";
-    }
+
 }

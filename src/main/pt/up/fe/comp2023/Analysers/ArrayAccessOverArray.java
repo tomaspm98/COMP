@@ -1,5 +1,6 @@
 package pt.up.fe.comp2023.Analysers;
 
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.analysis.JmmAnalysis;
@@ -25,10 +26,12 @@ public class ArrayAccessOverArray extends SymbolTableVisitor implements StageRes
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();
+        //addVisit("Assignment", this::arrayAccessVisit);
+        addVisit("Array", this::addVisit);
         visit(root);
     }
 
-    public Integer arrayAccessVisit(JmmNode node, Integer dummy) {
+    public String arrayAccessVisit(JmmNode node, String dummy) {
 
         JmmNode arrayNode = node.getJmmChild(0);
         if (arrayNode.getKind().equals("Identifier")) {
@@ -38,22 +41,27 @@ public class ArrayAccessOverArray extends SymbolTableVisitor implements StageRes
             if (tempMethod != null) {
                 String methodName = tempMethod.get().getJmmChild(0).get("value");
 
-                for (var localVariable : symbolTable.getLocalVariables(methodName)) {
+                List<Symbol> localVariables = symbolTable.getLocalVariables(methodName);
+                if (localVariables != null) {
+                    for (var localVariable : localVariables)
                     if (localVariable.getName().equals(arrName)) {
                         if (!localVariable.getType().isArray()) {
                             this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.valueOf(node.get("line")), Integer.valueOf(node.get("col")), "Var access have to be done over array"));
                         } else {
-                            return 0;
+                            return " ";
                         }
                     }
                 }
 
-                for (var localParameter : symbolTable.getParameters(methodName)) {
-                    if (localParameter.getName().equals(arrName)) {
-                        if (!localParameter.getType().isArray()) {
-                            this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.valueOf(node.get("line")), Integer.valueOf(node.get("col")), "Var access have to be done over array"));
-                        } else {
-                            return 0;
+                List<Symbol> localParameters = symbolTable.getParameters(methodName);
+                if (localParameters != null) {
+                    for (var localParameter : localParameters) {
+                        if (localParameter.getName().equals(arrName)) {
+                            if (!localParameter.getType().isArray()) {
+                                this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.valueOf(node.get("line")), Integer.valueOf(node.get("col")), "Var access have to be done over array"));
+                            } else {
+                                return " ";
+                            }
                         }
                     }
                 }
@@ -61,34 +69,26 @@ public class ArrayAccessOverArray extends SymbolTableVisitor implements StageRes
 
             var fields = symbolTable.getFields();
 
-            for (var field : fields) {
-                if (arrName.equals(field.getName())) {
-                    if (!field.getType().isArray()) {
-                        this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.valueOf(node.get("line")), Integer.valueOf(node.get("col")), "Var access have to be done over array"));
-                    } else {
-                        return 0;
+            if (fields != null) {
+                for (var field : fields) {
+                    if (arrName.equals(field.getName())) {
+                        if (!field.getType().isArray()) {
+                            this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.valueOf(node.get("line")), Integer.valueOf(node.get("col")), "Var access have to be done over array"));
+                        } else {
+                            return " ";
+                        }
                     }
                 }
+
             }
 
             this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.valueOf(node.get("line")), Integer.valueOf(node.get("col")), "Var access have to be done over array"));
         }
 
-        return 0;
+        return " ";
     }
 
-
-
-    /*private String dealWithImportDeclaration(JmmNode node, String s) {
-        StringBuilder ret = new StringBuilder();
-        for (JmmNode child : node.getChildren()) {
-            ret.append(child.get("pathFragment")).append(child.getIndexOfSelf() == node.getChildren().size() - 1 ? "" : ".");
-        }
-        this.table.addImport(ret.toString());
-        return "";
-    }*/
-
-    public Integer addVisit(JmmNode node, Integer dummy) {
+    public String addVisit(JmmNode node, String dummy) {
         JmmNode leftOperand = node.getJmmChild(0);
         JmmNode rightOperand = node.getJmmChild(1);
 
@@ -96,7 +96,7 @@ public class ArrayAccessOverArray extends SymbolTableVisitor implements StageRes
             reportIncompatibleTypes(node);
         }
 
-        return 0;
+        return "";
     }
 
     private boolean isOperandArray(JmmNode operand) {

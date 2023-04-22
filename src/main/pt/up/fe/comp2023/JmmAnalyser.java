@@ -33,11 +33,12 @@ public class JmmAnalyser implements JmmAnalysis {
                 new MethodCallEqualsMethodDeclaration(symbolTable, parserResult.getRootNode()),
                 new AssignType(symbolTable, parserResult.getRootNode()),
                 new TypeOperation(symbolTable, parserResult.getRootNode()),
+                new ArrayInOperation(symbolTable, parserResult.getRootNode()),
                 new ArrayInOperation(symbolTable, parserResult.getRootNode())
         );
 
         for(var analyser : analysers){
-            //analyser.visit(parserResult.getRootNode());
+            analyser.visit(parserResult.getRootNode());
             reports.addAll(analyser.getReports());
         }
 
