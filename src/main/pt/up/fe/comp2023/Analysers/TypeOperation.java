@@ -24,7 +24,7 @@ public class TypeOperation extends SymbolTableVisitor implements StageResult{
         this.reports = new ArrayList<>();
         buildVisitor();
         addVisit("Operation", this::operationVisit);
-        visit(rootNode);
+        //visit(rootNode);
     }
     public String operationVisit(JmmNode node, String dummy) {
         String nodeValue = node.get("op");
@@ -117,7 +117,7 @@ public class TypeOperation extends SymbolTableVisitor implements StageResult{
 
     @Override
     public List<Report> getReports() {
-        return reports;
+        return this.reports;
     }
 
     @Override

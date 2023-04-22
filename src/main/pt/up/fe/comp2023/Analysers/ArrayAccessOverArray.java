@@ -26,7 +26,7 @@ public class ArrayAccessOverArray extends SymbolTableVisitor implements StageRes
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();
-        //addVisit("Assignment", this::arrayAccessVisit);
+        //addVisit("ArrayAccess", this::arrayAccessVisit);
         addVisit("Array", this::addVisit);
         visit(root);
     }
@@ -82,7 +82,7 @@ public class ArrayAccessOverArray extends SymbolTableVisitor implements StageRes
 
             }
 
-            this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.valueOf(node.get("line")), Integer.valueOf(node.get("col")), "Var access have to be done over array"));
+            //this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.valueOf(node.get("line")), Integer.valueOf(node.get("col")), "Var access have to be done over array"));
         }
 
         return " ";
