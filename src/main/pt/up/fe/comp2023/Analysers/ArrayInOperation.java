@@ -32,7 +32,7 @@ public class ArrayInOperation extends SymbolTableVisitor implements StageResult 
         this.reports = new ArrayList<>();
         buildVisitor();
         addVisit("BinOpVisit", this::binOpVisit);
-        //visit(rootNode);
+        visit(rootNode);
     }
 
     public String binOpVisit(JmmNode node, String dummy) {
@@ -91,7 +91,7 @@ public class ArrayInOperation extends SymbolTableVisitor implements StageResult 
 
     @Override
     public List<Report> getReports() {
-        return this.reports;
+        return reports;
     }
 
     @Override

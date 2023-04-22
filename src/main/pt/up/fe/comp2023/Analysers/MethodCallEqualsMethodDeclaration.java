@@ -28,7 +28,7 @@ public class MethodCallEqualsMethodDeclaration extends SymbolTableVisitor implem
         this.reports = new ArrayList<>();
         buildVisitor();
         addVisit("ExpressionVisit", this::callExpressionVisit);
-        //visit(rootNode);
+        visit(rootNode);
     }
 
     private String callExpressionVisit(JmmNode node, String dummy) {
@@ -111,7 +111,7 @@ public class MethodCallEqualsMethodDeclaration extends SymbolTableVisitor implem
 
     @Override
     public List<Report> getReports() {
-        return this.reports;
+        return reports;
     }
 
     @Override

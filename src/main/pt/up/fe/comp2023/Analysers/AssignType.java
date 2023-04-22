@@ -24,7 +24,7 @@ public class AssignType extends SymbolTableVisitor implements StageResult{
         this.reports = new ArrayList<>();
         buildVisitor();
         addVisit("Assignmet",this::assignVisit);
-        //visit(rootNode);
+        visit(rootNode);
     }
 
     public String assignVisit(JmmNode node, String dummy) {
@@ -164,20 +164,20 @@ public class AssignType extends SymbolTableVisitor implements StageResult{
 
             return type.getName();
         }
-       /* if (myKind.equals("ArrayAccess")) {
+        if (myKind.equals("ArrayAccess")) {
             // if it's an array[] it produces an id as child 0, just return its type
             return typeCheck(node.getJmmChild(0));
         }
         if (myKind.equals("methodDeclaration")) {
             return "null"; // TODO: implement method
-        }*/
+        }
 
         return "null";
     }
 
     @Override
     public List<Report> getReports() {
-        return this.reports;
+        return reports;
     }
 
     @Override

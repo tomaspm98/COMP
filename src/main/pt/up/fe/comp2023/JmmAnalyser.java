@@ -2,7 +2,6 @@ package pt.up.fe.comp2023;
 
 import pt.up.fe.comp.jmm.analysis.JmmAnalysis;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
-import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.comp.jmm.report.Report;
@@ -35,14 +34,13 @@ public class JmmAnalyser implements JmmAnalysis {
                 new AssignType(symbolTable, parserResult.getRootNode()),
                 new TypeOperation(symbolTable, parserResult.getRootNode()),
                 new ArrayInOperation(symbolTable, parserResult.getRootNode()),
-                new BooleanConditions(symbolTable, parserResult.getRootNode())
+                new ArrayInOperation(symbolTable, parserResult.getRootNode())
         );
 
         for(var analyser : analysers){
             analyser.visit(parserResult.getRootNode());
             reports.addAll(analyser.getReports());
         }
-
 
         //reports.addAll(symbolTableFiller.getReports());
 

@@ -19,14 +19,11 @@ public class VarNotDeclared extends SymbolTableVisitor implements StageResult {
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();
-        addVisit("ID", this::idVisit);
+        addVisit("Variable", this::idVisit);
         visit(rootNode);
     }
 
     public String idVisit(JmmNode node, String dummy) {
-
-        System.out.println("Visiting node: " + node.getKind() + ", name: " + node.get("name"));
-
         var father = node.getJmmParent();
 
         if (father.getKind().equals("importDeclaration")
@@ -63,8 +60,6 @@ public class VarNotDeclared extends SymbolTableVisitor implements StageResult {
 
         this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.valueOf(node.get("line")), Integer.valueOf(node.get("col")),
                 "Var is not declared"));
-
-        System.out.println("Reports: " + getReports());
 
         return "";
     }
@@ -105,7 +100,7 @@ public class VarNotDeclared extends SymbolTableVisitor implements StageResult {
     }
 
     public List<Report> getReports() {
-        return this.reports;
+        return reports;
     }
 
     @Override
