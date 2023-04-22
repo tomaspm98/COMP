@@ -7,6 +7,7 @@ import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp2023.SymbolTable;
 import pt.up.fe.comp2023.node.information.Method;
+import pt.up.fe.comp2023.utils.ExpressionVisitorInformation;
 import pt.up.fe.specs.util.collections.SpecsList;
 
 import java.util.List;
@@ -15,8 +16,8 @@ import java.util.Optional;
 public class OllirGenerator extends AJmmVisitor<String, String> {
 
     private final SymbolTable symbolTable;
-    private final int tempVariables;
     private final SpecsList<Report> reports;
+    private int tempVariables;
 
     public OllirGenerator(SymbolTable symbolTable, SpecsList<Report> reports) {
         super();
@@ -24,18 +25,6 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         this.reports = reports;
         this.tempVariables = 0;
     }
-
-    @Override
-    protected void buildVisitor() {
-        addVisit("Program", this::dealWithProgram);
-        addVisit("ImportDeclaration", this::dealWithImportDeclaration);
-        addVisit("MethodDeclaration", this::dealWithMethodDeclaration);
-        addVisit("VarDeclaration", this::dealWithVarDeclaration);
-        addVisit("FieldDeclaration", this::dealWithFieldDeclaration);
-        addVisit("Type", this::dealWithType);
-    }
-
-    // Utility functions
 
     public static String jmmTypeToOllirType(String jmmType) {
         switch (jmmType) {
@@ -50,6 +39,8 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             }
         }
     }
+
+    // Utility functions
 
     public static String jmmTypeToOllirType(Type jmmType) {
         StringBuilder ret = new StringBuilder();
@@ -79,16 +70,6 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         return ret.toString();
     }
 
-    private String jmmSymbolToOllirSymbol(JmmNode node) {
-        StringBuilder ret = new StringBuilder();
-
-        String fieldType = visit(node.getJmmChild(0));
-        String fieldName = node.get("name");
-
-        ret.append(fieldName).append(".").append(fieldType);
-        return ret.toString();
-    }
-
     public static String jmmSymbolToOllirSymbol(Symbol symbol) {
         String name = symbol.getName();
         Type type = symbol.getType();
@@ -103,6 +84,26 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         return ret.toString();
     }
 
+    @Override
+    protected void buildVisitor() {
+        addVisit("Program", this::dealWithProgram);
+        addVisit("ImportDeclaration", this::dealWithImportDeclaration);
+        addVisit("MethodDeclaration", this::dealWithMethodDeclaration);
+        addVisit("VarDeclaration", this::dealWithVarDeclaration);
+        addVisit("FieldDeclaration", this::dealWithFieldDeclaration);
+        addVisit("Type", this::dealWithType);
+    }
+
+    private String jmmSymbolToOllirSymbol(JmmNode node) {
+        StringBuilder ret = new StringBuilder();
+
+        String fieldType = visit(node.getJmmChild(0));
+        String fieldName = node.get("name");
+
+        ret.append(fieldName).append(".").append(fieldType);
+        return ret.toString();
+    }
+
     private String getMethodName(JmmNode methodNode) {
         String ret;
 
@@ -112,6 +113,28 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
 
         return ret;
     }
+
+    private String exprInfoToString(ExpressionVisitorInformation data) {
+        StringBuilder ret = new StringBuilder();
+
+        for (var auxLine : data.getAuxLines()) {
+            ret.append(auxLine).append("\n");
+        }
+
+        ret.append(data.getResultNameAndType());
+        return ret.toString();
+    }
+
+    private String exprAuxInfoToString(ExpressionVisitorInformation data) {
+        StringBuilder ret = new StringBuilder();
+
+        for (var auxLine : data.getAuxLines()) {
+            ret.append(auxLine).append("\n");
+        }
+
+        return ret.toString();
+    }
+
 
     // Visitors
 
@@ -219,23 +242,20 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         // BAD CODE !! If and While should have different types, but as to not interfere with other branches this is a patchwork solution
         if (node.getNumChildren() == 3) { // if
             ret.append("if (");
-            ret.append(visit(node.getJmmChild(0))).append(") ")
-                    .append(visit(node.getJmmChild(1)))
-                    .append("\nelse ")
-                    .append(visit(node.getJmmChild(2)))
-                    .append("\n");
+            ret.append(visit(node.getJmmChild(0))).append(") ").append(visit(node.getJmmChild(1))).append("\nelse ").append(visit(node.getJmmChild(2))).append("\n");
         } else { // while
             ret.append("while (");
-            ret.append(visit(node.getJmmChild(0))).append(") ")
-                    .append(visit(node.getJmmChild(1)))
-                    .append("\n");
+            ret.append(visit(node.getJmmChild(0))).append(") ").append(visit(node.getJmmChild(1))).append("\n");
         }
 
         return ret.toString();
     }
 
     private String dealWithCondition(JmmNode node, String __) {
-        return visit(node.getJmmChild(0));
+        ExpressionVisitor exprVisitor = new ExpressionVisitor(symbolTable, this.tempVariables);
+        ExpressionVisitorInformation info = exprVisitor.visit(node.getJmmChild(0));
+        this.tempVariables += exprVisitor.getUsedAuxVariables();
+        return exprInfoToString(info);
     }
 
     private String dealWithIfTrue(JmmNode node, String __) {
@@ -247,15 +267,18 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
     }
 
     private String dealWithSimpleStatement(JmmNode node, String __) {
-        return visit(node.getJmmChild(0)) + ";\n";
+        ExpressionVisitor exprVisitor = new ExpressionVisitor(symbolTable, this.tempVariables);
+        ExpressionVisitorInformation info = exprVisitor.visit(node.getJmmChild(0));
+        this.tempVariables += exprVisitor.getUsedAuxVariables();
+
+        return exprInfoToString(info) + ";\n";
     }
 
     private String dealWithClassFieldAssignmentStatement(JmmNode node, String __) {
-        StringBuilder ret = new StringBuilder();
 
         String fieldName = node.getJmmChild(0).get("varName");
 
-        String fieldType;
+        String fieldType = null;
 
         //TODO create method for this in symbolTable
         for (Symbol symbol : symbolTable.getFields()) {
@@ -264,11 +287,15 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
                 break;
             }
         }
+        if (fieldType == null) {
+            System.err.println("Tried to find '" + fieldName + "'s type but failed");
+            return null;
+        }
 
-        ExpressionVisitor eVisitor = new ExpressionVisitor(this.symbolTable);
-
-
-        return ret.toString();
+        ExpressionVisitor exprVisitor = new ExpressionVisitor(symbolTable, this.tempVariables);
+        ExpressionVisitorInformation info = exprVisitor.visit(node.getJmmChild(0));
+        this.tempVariables += exprVisitor.getUsedAuxVariables();
+        return exprInfoToString(info) + "putfield(this, " + fieldName + "." + fieldType + ", " + info.getResultNameAndType() + ").V;\n";
     }
 
     private String dealWithAssignmentStatement(JmmNode node, String __) {

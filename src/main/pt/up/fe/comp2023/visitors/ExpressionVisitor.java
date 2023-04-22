@@ -1,5 +1,7 @@
 package pt.up.fe.comp2023.visitors;
 
+import org.specs.comp.ollir.Ollir;
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp2023.SymbolTable;
@@ -46,19 +48,31 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
     // End Utility methods
     @Override
     protected void buildVisitor() {
-
+        addVisit("MethodCall", this::dealWithMethodCall);
+        addVisit("ArrayLength", this::dealWithArrayLength);
+        addVisit("ArrayAccess", this::dealWithArrayAccess);
+        addVisit("Parenthesis", this::dealWithParenthesis);
+        addVisit("UnaryBinaryOp", this::dealWithUnaryBoolOp);
+        addVisit("ArithmeticBinaryOp", this::dealWithArithmeticBinaryOp);
+        addVisit("BoolBinaryOp", this::dealWithBoolBinaryOp);
+        addVisit("ArrayInstantiation", this::dealWithArrayInstantiation);
+        addVisit("Instantiation", this::dealWithInstantiation);
+        addVisit("Integer", this::dealWithInteger);
+        addVisit("Boolean", this::dealWithBool);
+        addVisit("Identifier", this::dealWithID);
+        addVisit("ClassAccess", this::dealWithClassAccess);
     }
 
     private ExpressionVisitorInformation dealWithMethodCall(JmmNode node, String methodName) {
         StringBuilder lastAuxLine = new StringBuilder();
         ExpressionVisitorInformation ret = new ExpressionVisitorInformation();
 
-        String methodName = node.get("methodName");
-        Optional<Method> optMethod = this.symbolTable.getMethodTry(methodName);
+        String calledMethod = node.get("methodName");
+        Optional<Method> optMethod = this.symbolTable.getMethodTry(calledMethod);
 
         if (optMethod.isEmpty()) {
             //TODO maybe add report
-            System.err.println("Tried to search for method '" + methodName + "' but it wasn't found.");
+            System.err.println("Tried to search for method '" + calledMethod + "' but it wasn't found.");
             return ret;
         }
 
@@ -77,7 +91,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
                 .append(".")
                 .append(classNameInfo.getOllirType())
                 .append(", \"")
-                .append(methodName)
+                .append(calledMethod)
                 .append("\"");
 
         // Probably bad code but it probably works
@@ -185,7 +199,28 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
     }
 
     private ExpressionVisitorInformation dealWithArithmeticBinaryOp(JmmNode node, String methodName) {
-        StringBuilder retName = new StringBuilder();
+        ExpressionVisitorInformation ret = new ExpressionVisitorInformation();
+
+        JmmNode arg1Node = node.getObject("arg1", JmmNode.class);
+        JmmNode arg2Node = node.getObject("arg2", JmmNode.class);
+        String opAndType = node.get(" op") + ".i32 ";
+
+        ExpressionVisitorInformation arg1Info = visitExpressionAndStoreInfo(ret, arg1Node);
+        ExpressionVisitorInformation arg2Info = visitExpressionAndStoreInfo(ret, arg2Node);
+
+        String lastAuxVar = getNewAuxVariable();
+        String type = "i32";
+        String lastAuxLine = lastAuxVar + "." + type + " :=." + type + " " + arg1Info.getResultNameAndType() + opAndType + arg2Info.getResultNameAndType() + ";";
+
+        ret.addAuxLine(lastAuxLine);
+        ret.setResultName(lastAuxVar);
+        ret.setOllirType(type);
+
+        return ret;
+
+
+        //TODO in case we don't need to create an aux variable... might be useful in the future
+        /*
         ExpressionVisitorInformation ret = new ExpressionVisitorInformation(false);
 
         String opAndType = node.get(" op") + ".i32 ";
@@ -200,9 +235,33 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         ret.setResultName(retName.toString());
         ret.setOllirType("i32");
         return ret;
+        */
+
     }
 
     private ExpressionVisitorInformation dealWithBoolBinaryOp(JmmNode node, String methodName) {
+        ExpressionVisitorInformation ret = new ExpressionVisitorInformation();
+
+        JmmNode arg1Node = node.getObject("arg1", JmmNode.class);
+        JmmNode arg2Node = node.getObject("arg2", JmmNode.class);
+        String opAndType = node.get(" op") + ".bool ";
+
+        ExpressionVisitorInformation arg1Info = visitExpressionAndStoreInfo(ret, arg1Node);
+        ExpressionVisitorInformation arg2Info = visitExpressionAndStoreInfo(ret, arg2Node);
+
+        String lastAuxVar = getNewAuxVariable();
+        String type = "bool";
+        String lastAuxLine = lastAuxVar + "." + type + " :=." + type + " " + arg1Info.getResultNameAndType() + opAndType + arg2Info.getResultNameAndType() + ";";
+
+        ret.addAuxLine(lastAuxLine);
+        ret.setResultName(lastAuxVar);
+        ret.setOllirType(type);
+
+        return ret;
+
+
+        //TODO in case we don't need to create an aux variable... might be useful in the future
+        /*
         StringBuilder retName = new StringBuilder();
         ExpressionVisitorInformation ret = new ExpressionVisitorInformation(false);
 
@@ -218,6 +277,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         ret.setResultName(retName.toString());
         ret.setOllirType("bool");
         return ret;
+        */
     }
 
     /*
@@ -276,11 +336,65 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         ExpressionVisitorInformation ret = new ExpressionVisitorInformation();
 
         String value = node.get("value");
-        ret.setResultName(value);
 
-        //TODO bruh
+        Optional<Method> optMethod = this.symbolTable.getMethodTry(methodName);
+
+        if (optMethod.isEmpty()) {
+            //TODO maybe add report
+            System.err.println("Tried to search for method '" + methodName + "' but it wasn't found.");
+            return ret;
+        }
+
+        Method method = optMethod.get();
+
+
+        SymbolInfo symbolInfo = this.symbolTable.getMostSpecificSymbol(methodName, value);
+
+        switch(symbolInfo.getSymbolPosition()) {
+            case LOCAL -> {
+                for (Symbol local : method.getVariables()) {
+                    if (local.getName().equals(value)) {
+                        ret.setResultName(value);
+                        ret.setOllirType(OllirGenerator.jmmTypeToOllirType(local.getType()));
+                    }
+                }
+            }
+            case PARAM -> {
+                for (int i = 0; i < method.getArguments().size(); i++) {
+                    Symbol param = method.getArguments().get(i);
+                    if (param.getName().equals(value)) {
+                        ret.setResultName("$" + i + "." + value);
+                        ret.setOllirType(OllirGenerator.jmmTypeToOllirType(param.getType()));
+                    }
+                }
+
+            }
+            case FIELD -> {
+                for (Symbol field : symbolTable.getFields()) {
+                    if (field.getName().equals(value)) {
+                        String varAux = getNewAuxVariable();
+                        String fieldType = OllirGenerator.jmmTypeToOllirType(symbolInfo.getSymbol().getType());
+                        String auxLine = varAux + "." + fieldType + " :=." + fieldType + " getfield(this, " + field.getName() + "." + fieldType + ")." + fieldType;
+                        ret.addAuxLine(auxLine);
+                        ret.setResultName(varAux);
+                        ret.setOllirType(fieldType);
+                    }
+                }
+            }
+        }
 
         ret.setOllirType("bool");
         return ret;
+    }
+
+    private ExpressionVisitorInformation dealWithClassAccess(JmmNode node, String methodName) {
+        ExpressionVisitorInformation ret = new ExpressionVisitorInformation();
+        ret.setResultName("this");
+        String type = symbolTable.getClassName();
+        return ret;
+    }
+
+    public Integer getUsedAuxVariables() {
+        return usedAuxVariables;
     }
 }
