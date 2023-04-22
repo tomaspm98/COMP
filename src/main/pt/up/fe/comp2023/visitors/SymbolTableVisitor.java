@@ -15,6 +15,8 @@ import pt.up.fe.specs.util.collections.SpecsList;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
 public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     private final SymbolTable table;
 
@@ -41,6 +43,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         addVisit("ElseBlock", this::dealWithIfBranches);
         addVisit("WhileBlock", this::dealWithWhileBlock);
         addVisit("FieldDeclaration", this::dealWithFieldDeclaration);
+        addVisit("ArrayAccess", this::visitArrayAccess);
     }
 
     public SymbolTableVisitor(SymbolTable table) {
@@ -90,6 +93,78 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     }
 
     // END UTILITY FUNCTIONS
+
+    public String visitArrayAccess(JmmNode node, String dummy) {
+        // Infer the type of the array and index, e.g., using a getType method
+        String arrayType = getType(node.getJmmChild(0));
+        String indexType = getType(node.getJmmChild(1));
+
+        // Check if the types are valid, e.g., the arrayType is an array and indexType is an integer
+        if (arrayType.endsWith("[]") && indexType.equals("int")) {
+            // Set the inferred type of the ArrayAccess node to the element type of the array
+            String elementType = arrayType.substring(0, arrayType.length() - 2);
+            node.put("type", elementType);
+        } else {
+            int line = Integer.parseInt(node.get("line"));
+            int col = Integer.parseInt(node.get("col"));
+            String errorMsg = "Invalid array access: expected an array type and an integer index, but found " + arrayType + " and " + indexType;
+            Report report = new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, errorMsg);
+            reports.add(report);
+        }
+
+        return "";
+    }
+
+    public String getType(JmmNode node) {
+        String type = "";
+
+        if (node.getKind().equals("Identifier")) {
+            String varName = node.get("value");
+            var tempMethod = node.getAncestor("MethodDeclaration");
+
+            if (tempMethod != null) {
+                String methodName = tempMethod.get().getJmmChild(0).get("value");
+
+                for (var localVariable : table.getLocalVariables(methodName)) {
+                    if (localVariable.getName().equals(varName)) {
+                        return localVariable.getType().getName();
+                    }
+                }
+
+                for (var localParameter : table.getParameters(methodName)) {
+                    if (localParameter.getName().equals(varName)) {
+                        return localParameter.getType().getName();
+                    }
+                }
+            }
+
+            var fields = table.getFields();
+
+            for (var field : fields) {
+                if (varName.equals(field.getName())) {
+                    return field.getType().getName();
+                }
+            }
+        } else if (node.getKind().equals("Literal")) {
+            String literalType = node.get("type");
+            if (literalType != null) {
+                return literalType;
+            }
+        } else if (node.getKind().equals("NewArray")) {
+            return "int[]"; // Assuming the only possible array type is int[]
+        } else if (node.getKind().equals("ArrayAccess")) {
+            String arrayType = getType(node.getJmmChild(0));
+            if (arrayType.endsWith("[]")) {
+                type = arrayType.substring(0, arrayType.length() - 2);
+            }
+        } else if (node.getKind().equals("MethodCall")) {
+            // You'll need to handle method call type inference based on the called method's return type
+        } else if (node.getKind().equals("BinaryExpression") || node.getKind().equals("UnaryExpression")) {
+            // You'll need to handle expression type inference based on the operands and the operator
+        }
+
+        return type;
+    }
 
     private String dealWithProgram(JmmNode node, String s) {
         for (JmmNode child : node.getChildren()) {

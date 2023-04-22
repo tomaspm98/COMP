@@ -19,7 +19,7 @@ public class VarNotDeclared extends SymbolTableVisitor implements StageResult {
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();
-        addVisit("Variable", this::idVisit);
+        addVisit("ID", this::idVisit);
         visit(rootNode);
     }
 
