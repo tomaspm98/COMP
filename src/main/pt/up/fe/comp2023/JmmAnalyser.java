@@ -27,19 +27,22 @@ public class JmmAnalyser implements JmmAnalysis {
 
         reports.addAll(symbolTableFiller.getReports());
 
-        List<StageResult> analysers = Arrays.asList(
+        List<SymbolTableVisitor> analysers = Arrays.asList(
                 new ArrayAccessOverArray(symbolTable, parserResult.getRootNode()),
                 new VarNotDeclared(symbolTable, parserResult.getRootNode()),
                 new MethodCallEqualsMethodDeclaration(symbolTable, parserResult.getRootNode()),
                 new AssignType(symbolTable, parserResult.getRootNode()),
                 new TypeOperation(symbolTable, parserResult.getRootNode()),
                 new ArrayInOperation(symbolTable, parserResult.getRootNode()),
-                new BooleanConditions(symbolTable, parserResult.getRootNode())
+                new ArrayInOperation(symbolTable, parserResult.getRootNode())
         );
 
         for(var analyser : analysers){
+            analyser.visit(parserResult.getRootNode());
             reports.addAll(analyser.getReports());
         }
+
+        //reports.addAll(symbolTableFiller.getReports());
 
         return new JmmSemanticsResult(parserResult, symbolTable, reports);
     }
