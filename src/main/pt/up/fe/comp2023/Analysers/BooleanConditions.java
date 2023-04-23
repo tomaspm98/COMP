@@ -33,7 +33,7 @@ public class BooleanConditions extends SymbolTableVisitor implements StageResult
 
         if (!expressionType.equals("boolean")) {
             this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
-                    Integer.valueOf(node.get("line")), Integer.valueOf(node.get("col")),
+                    Integer.valueOf(-1), Integer.valueOf(-1),
                     "Expression in the condition must return a boolean value"));
         }
         return "";
@@ -63,7 +63,7 @@ public class BooleanConditions extends SymbolTableVisitor implements StageResult
         JmmNode current = node.getJmmParent();
         while (current != null) {
             String kind = current.getKind();
-            if (kind.equals("NonVoid") || kind.equals("Void")) {
+            if (kind.equals("methodDeclaration")) {
                 // LocalVars
                 for (var localVariable : symbolTable.getLocalVariables(current.get("name"))) {
                     if (node.get("name").equals(localVariable.getName()))

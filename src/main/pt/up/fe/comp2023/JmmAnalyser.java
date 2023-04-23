@@ -25,6 +25,10 @@ public class JmmAnalyser implements JmmAnalysis {
 
         symbolTableFiller.visit(parserResult.getRootNode()); // Fills the information for symbolTable
 
+       // System.out.println("========= AST Structure =========");
+        //System.out.println(parserResult.getRootNode().toJson());
+       // System.out.println("==================================");
+
         reports.addAll(symbolTableFiller.getReports());
 
         List<SymbolTableVisitor> analysers = Arrays.asList(
@@ -34,11 +38,10 @@ public class JmmAnalyser implements JmmAnalysis {
                 new AssignType(symbolTable, parserResult.getRootNode()),
                 new TypeOperation(symbolTable, parserResult.getRootNode()),
                 new ArrayInOperation(symbolTable, parserResult.getRootNode()),
-                new ArrayInOperation(symbolTable, parserResult.getRootNode())
+                new BooleanConditions(symbolTable, parserResult.getRootNode())
         );
 
         for(var analyser : analysers){
-            analyser.visit(parserResult.getRootNode());
             reports.addAll(analyser.getReports());
         }
 
