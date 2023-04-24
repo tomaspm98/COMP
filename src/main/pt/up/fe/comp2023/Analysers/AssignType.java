@@ -23,13 +23,22 @@ public class AssignType extends SymbolTableVisitor implements StageResult{
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();
-        addVisit("Assignmet",this::assignVisit);
+        addVisit("Assignment",this::assignVisit);
         visit(rootNode);
     }
 
     public String assignVisit(JmmNode node, String dummy) {
-        JmmNode leftChild = node.getJmmChild(0);
-        JmmNode rightChild = node.getJmmChild(1);
+        int  numChildren = node.getNumChildren();
+        JmmNode leftChild = null;
+        JmmNode rightChild = null;
+
+        if (numChildren > 0) {
+            leftChild = node.getJmmChild(0);
+        }
+
+        if (numChildren > 1) {
+            rightChild = node.getJmmChild(1);
+        }
 
         //try{
         //        //    leftIdType = getIdType(leftChild).getName();
@@ -79,7 +88,7 @@ public class AssignType extends SymbolTableVisitor implements StageResult{
 
         if(!leftIdType.equals(rightIdType)){
             this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
-                    Integer.valueOf(node.get("line")) , Integer.valueOf(node.get("col")),
+                    Integer.valueOf(-1) , Integer.valueOf(-1),
                     "Assignment with wrong types"));
         }
 
@@ -140,6 +149,10 @@ public class AssignType extends SymbolTableVisitor implements StageResult{
     }
 
     private String typeCheck(JmmNode node) {
+        if (node == null) {
+            return "null";
+        }
+
         var myKind = node.getKind();
 
         if (myKind.equals("ArithmeticBinaryOp") || myKind.equals("BoolBinaryOp")) {
@@ -149,8 +162,10 @@ public class AssignType extends SymbolTableVisitor implements StageResult{
             return "int";
         }
 
-        if (myKind.equals("Integer") || myKind.equals("Boolean")) {
-            return node.get("type");
+        if (myKind.equals("Integer")) {
+            return "int";
+        } else if (myKind.equals("Boolean")) {
+            return "boolean";
         }
         if (myKind.equals("Instantiation")) {
             return "new";
