@@ -136,16 +136,17 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         return ret.toString();
     }
 
-    public static String getOllirVariableNameAndType(SymbolTable symbolTable, Method method, String jmmVarName) {
+    public ExpressionVisitorInformation getOllirVariableNameAndType(Method method, String jmmVarName) {
         SymbolInfo symbolInfo = symbolTable.getMostSpecificSymbol(method.getName(), jmmVarName);
-
+        ExpressionVisitorInformation evi = new ExpressionVisitorInformation();
 
 
         switch(symbolInfo.getSymbolPosition()) {
             case LOCAL -> {
                 for (Symbol local : method.getVariables()) {
                     if (local.getName().equals(jmmVarName)) {
-                        return jmmVarName + "." + OllirGenerator.jmmTypeToOllirType(local.getType());
+                        evi.setResultName(jmmVarName);
+                        evi.setOllirType(OllirGenerator.jmmTypeToOllirType(local.getType()));
                     }
                 }
             }
@@ -153,28 +154,27 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
                 for (int i = 0; i < method.getArguments().size(); i++) {
                     Symbol param = method.getArguments().get(i);
                     if (param.getName().equals(jmmVarName)) {
-                        return "$" + i + "." + jmmVarName + "." + OllirGenerator.jmmTypeToOllirType(local.getType());
+                        evi.setResultName("$" + i + "." + jmmVarName);
+                        evi.setOllirType(OllirGenerator.jmmTypeToOllirType(param.getType()));
                     }
                 }
 
             }
             case FIELD -> {
                 for (Symbol field : symbolTable.getFields()) {
-                    if (field.getName().equals(value)) {
-                        //TODO
-                        return jmmVarName + "." + OllirGenerator.jmmTypeToOllirType(local.getType());
-                        //TODO
-                        String varAux = getNewAuxVariable();
+                    if (field.getName().equals(jmmVarName)) {
+                        String varAux = "aux" + tempVariables;
+                        this.tempVariables++;
                         String fieldType = OllirGenerator.jmmTypeToOllirType(symbolInfo.getSymbol().getType());
                         String auxLine = varAux + "." + fieldType + " :=." + fieldType + " getfield(this, " + field.getName() + "." + fieldType + ")." + fieldType;
-                        ret.addAuxLine(auxLine);
-                        ret.setResultName(varAux);
-                        ret.setOllirType(fieldType);
+                        evi.addAuxLine(auxLine);
+                        evi.setResultName(varAux);
+                        evi.setOllirType(fieldType);
                     }
                 }
             }
         }
-
+        return evi;
     }
 
 
@@ -342,10 +342,9 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
 
     // Please do not read this code. This is the worst code I have ever written.
     private String dealWithAssignmentStatement(JmmNode node, String methodName) {
-
         String varName = node.get("varName");
 
-        JmmNode exprNode =  node.getJmmChild(0);
+        JmmNode assignedExprNode =  node.getJmmChild(0);
 
         Optional<Method> optMethod = this.symbolTable.getMethodTry(methodName);
 
@@ -355,18 +354,36 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             return null;
         }
 
-        String ollirVarName = getOllirVariableName(Method method, String jmmVarName);
+        Method method = optMethod.get();
+
+        ExpressionVisitorInformation leftVarData = getOllirVariableNameAndType(method, varName);
 
         ExpressionVisitor expressionVisitor = new ExpressionVisitor(this.symbolTable, this.tempVariables);
-        ExpressionVisitorInformation info = expressionVisitor.visit(exprNode);
-        String ret = exprAuxInfoToString(info) + varName + "." + ;
-
-
-        return "";
+        ExpressionVisitorInformation assignedExprNodeData = expressionVisitor.visit(assignedExprNode);
+        return exprAuxInfoToString(leftVarData) + exprAuxInfoToString(assignedExprNodeData) + varName + "." + assignedExprNodeData.getOllirType()
+                + ":=." + assignedExprNodeData.getOllirType() + assignedExprNodeData.getResultNameAndType()n;
     }
 
-    private String dealWithArrayAssignmentStatement(JmmNode node, String __) {
+    private String dealWithArrayAssignmentStatement(JmmNode node, String methodName) {
+        String varName = node.get("varName");
 
+        JmmNode arrayExprNode =  node.getJmmChild(0);
+
+        Optional<Method> optMethod = this.symbolTable.getMethodTry(methodName);
+
+        if (optMethod.isEmpty()) {
+            //TODO maybe add report
+            System.err.println("Tried to search for method '" + methodName + "' but it wasn't found.");
+            return null;
+        }
+
+        Method method = optMethod.get();
+
+        ExpressionVisitorInformation varData = getOllirVariableNameAndType(method, varName);
+
+        ExpressionVisitor expressionVisitor = new ExpressionVisitor(this.symbolTable, this.tempVariables);
+        ExpressionVisitorInformation data = expressionVisitor.visit(arrayExprNode);
+        return exprAuxInfoToString(data) + varName + "." + data.getOllirType();
         return "";
     }
 }
