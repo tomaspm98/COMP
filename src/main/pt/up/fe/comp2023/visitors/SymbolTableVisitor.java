@@ -41,6 +41,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         addVisit("ElseBlock", this::dealWithIfBranches);
         addVisit("WhileBlock", this::dealWithWhileBlock);
         addVisit("FieldDeclaration", this::dealWithFieldDeclaration);
+        setDefaultVisit(this::defaultVisitor);
     }
 
     public SymbolTableVisitor(SymbolTable table) {
@@ -129,6 +130,10 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
 
     private boolean isMethodSymbol(JmmNode node) {
         return node.getKind().equals("MethodSymbol") || node.getKind().equals("VoidMethodSymbol");
+    }
+
+    private String defaultVisitor(JmmNode __, String ___) {
+        return "";
     }
 
     private String dealWithMethodDeclaration(JmmNode node, String s) {
