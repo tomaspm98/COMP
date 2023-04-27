@@ -44,6 +44,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         addVisit("WhileBlock", this::dealWithWhileBlock);
         addVisit("FieldDeclaration", this::dealWithFieldDeclaration);
         addVisit("ArrayAccess", this::visitArrayAccess);
+        setDefaultVisit(this::defaultVisitor);
     }
 
     public SymbolTableVisitor(SymbolTable table) {
@@ -177,6 +178,9 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         StringBuilder ret = new StringBuilder();
         for (JmmNode child : node.getChildren()) {
             ret.append(child.get("pathFragment")).append(child.getIndexOfSelf() == node.getChildren().size() - 1 ? "" : ".");
+            if (child.getIndexOfSelf() == node.getChildren().size() - 1) {
+                this.table.addImportedClass(child.get("pathFragment"));
+            }
         }
         this.table.addImport(ret.toString());
         return "";
@@ -204,6 +208,10 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
 
     private boolean isMethodSymbol(JmmNode node) {
         return node.getKind().equals("MethodSymbol") || node.getKind().equals("VoidMethodSymbol");
+    }
+
+    private String defaultVisitor(JmmNode __, String ___) {
+        return "";
     }
 
     private String dealWithMethodDeclaration(JmmNode node, String s) {

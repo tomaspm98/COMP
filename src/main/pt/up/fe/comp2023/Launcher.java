@@ -58,7 +58,11 @@ public class Launcher {
 
         String code1 = SpecsIo.read(inputFile);
 
-        var ollirResult= new OllirResult(code1, new HashMap<>());
+        Optimizer optimizer = new Optimizer();
+
+        OllirResult ollirResult =  optimizer.toOllir(analysisResult);
+
+        System.out.println(ollirResult.getOllirCode());
 
         var jasminBackend = new JasminBackender();
 
@@ -91,6 +95,7 @@ public class Launcher {
         // Generate .class file
         backendResult.compile(path.toFile());
         System.out.println(".class file saved successfully!");
+
     }
 
     private static Map<String, String> parseArgs(String[] args) {
