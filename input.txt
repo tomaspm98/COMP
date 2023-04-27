@@ -43,16 +43,16 @@ class myClass extends importedClass {
 	    intArg = 1;
 	}
 
-	public int get(){
+	public int get() {
         return a;
     }
 
-    public int put(int n){
+    public int put(int n) {
         a = n;
         return 1;
     }
 
-    public int m1(){
+    public int m1() {
         myClass c1;
         a = 2;
         io.println(this.get());
@@ -64,8 +64,8 @@ class myClass extends importedClass {
     }
 
 	public static void main(String[] args) {
-		ioPlus.printHelloWorld();
         myClass A;
+		ioPlus.printHelloWorld();
         A = new myClass();
         A.m1();
 	}
