@@ -21,7 +21,6 @@ class myClass extends importedClass {
 	    ioPlus myLocalImported;
 	    madeUp myLocalMadeUp;
 	    int myLocalInt;
-	    int x;
 
 	    //test imported method call with random arguments, simple statement
 	    myLocalImported.randomMethod();
@@ -31,15 +30,17 @@ class myClass extends importedClass {
 	    myLocalImported.fifthRandomMethod(aStr, strArr, iArr, myLocalIntArr, importedType, myLocalImported);
 
 	    //test simple assignment
-	    //x = myLocalInt;
-	    //myLocalInt = 2;
-	    //myLocalInt = anInt;
-	    //myLocalInt = anInt + 2;
-	    //myLocalInt = myLocalInt + anInt + 2;
-	    //myLocalInt = myLocalInt * 2 + 3 * intArg;
 
-	    //this.anInt = 5 * 10 + myLocalInt;
-	    //intArg = 1;
+	    myLocalInt = 2;
+	    myLocalInt = anInt;
+	    myLocalInt = anInt + 2;
+	    myLocalInt = myLocalInt + anInt + 2;
+	    myLocalInt = myLocalInt * 2 + 3 * intArg;
+
+	    this.anInt = 5 * 10 + myLocalInt;
+	    intArg = 1;
+
+
 	}
 
 	public static void main(String[] args) {
