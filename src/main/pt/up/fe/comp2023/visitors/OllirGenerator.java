@@ -17,6 +17,7 @@ import java.util.Optional;
 
 public class OllirGenerator extends AJmmVisitor<String, String> {
 
+    private static int identantion = 0;
     private final SymbolTable symbolTable;
     private final SpecsList<Report> reports;
     private int tempVariables;
@@ -92,6 +93,22 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         return ret.toString();
     }
 
+    public static int getIdentantion() {
+        return identantion;
+    }
+
+    public static void increaseIdentation() {
+        identantion++;
+    }
+
+    public static void decreaseIdentation() {
+        identantion--;
+    }
+
+    public static String getIdentationString() {
+        return "\t".repeat(identantion);
+    }
+
     @Override
     protected void buildVisitor() {
         addVisit("Program", this::dealWithProgram);
@@ -135,7 +152,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         StringBuilder ret = new StringBuilder();
 
         for (var auxLine : data.getAuxLines()) {
-            ret.append(auxLine).append("\n");
+            ret.append(getIdentationString()).append(auxLine).append("\n");
         }
 
         ret.append(data.getResultNameAndType());
@@ -146,7 +163,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         StringBuilder ret = new StringBuilder();
 
         for (var auxLine : data.getAuxLines()) {
-            ret.append(auxLine).append("\n");
+            ret.append(getIdentationString()).append(auxLine).append("\n");
         }
 
         return ret.toString();
@@ -199,6 +216,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
     private String dealWithProgram(JmmNode node, String arg) {
         StringBuilder ret = new StringBuilder();
         for (JmmNode child : node.getChildren()) {
+            if (child.getKind().equals("ClassDeclaration")) ret.append("\n");
             ret.append(visit(child)).append("\n");
         }
         return ret.toString();
@@ -220,19 +238,36 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
 
         String className = node.get("className");
 
+        ret.append(className);
+
         Optional<String> superClassNameOpt = node.getOptional("superClassName");
         superClassNameOpt.ifPresent(s -> ret.append(" extends ").append(s));
 
-        ret.append(className).append(" {\n");
-        for (JmmNode child : node.getChildren()) {
-            ret.append("    ").append(visit(child)).append("\n");
+        ret.append(" {\n\n");
+        increaseIdentation();
+
+
+        for (JmmNode fieldDeclaration : node.getChildren().stream().filter(s -> s.getKind().equals("FieldDeclaration")).toList()) {
+            ret.append(visit(fieldDeclaration)).append("\n");
+        }
+        ret.append("\n");
+
+        ret.append(getIdentationString()).append(".construct ").append(className).append("().V {\n");
+        increaseIdentation();
+        ret.append(getIdentationString()).append("invokespecial(this, \"<init>\").V;\n");
+        decreaseIdentation();
+        ret.append(getIdentationString()).append("}\n\n");
+
+        for (JmmNode child : node.getChildren().stream().filter(s -> s.getHierarchy().contains("MethodDeclaration")).toList()) {
+            ret.append(visit(child)).append("\n\n");
         }
         ret.append("}\n");
+        decreaseIdentation();
         return ret.toString();
     }
 
     private String dealWithMethodDeclaration(JmmNode node, String __) {
-        StringBuilder ret = new StringBuilder(".method ");
+        StringBuilder ret = new StringBuilder(getIdentationString() + ".method ");
 
         String methodName = this.getMethodName(node);
         Optional<Method> methodOp = this.symbolTable.getMethodTry(methodName);
@@ -261,12 +296,13 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         }
 
         ret.append(").").append(jmmTypeToOllirType(method.getRetType().getName())).append(" {\n");
+        increaseIdentation();
 
         List<JmmNode> methodStatements = node.getChildren().stream().filter((child) -> child.getKind().equals("MethodStatement")).map((child) -> child.getJmmChild(0)) // get statement inside methodStatement
                 .toList();
 
         for (JmmNode statement : methodStatements) {
-            ret.append("    ").append(visit(statement, methodName));
+            ret.append(visit(statement, methodName));
         }
 
         if (node.getKind().equals("NonVoid")) {
@@ -274,18 +310,19 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             ExpressionVisitor retExprVisitor = new ExpressionVisitor(this.symbolTable, this.tempVariables);
             ExpressionVisitorInformation retInfo = retExprVisitor.visit(retExpressionNode, methodName);
             this.tempVariables += retExprVisitor.getUsedAuxVariables();
-            ret.append( exprAuxInfoToString(retInfo));
-            ret.append("ret.");
+            ret.append(exprAuxInfoToString(retInfo));
+            ret.append(getIdentationString()).append("ret.");
             ret.append(retInfo.getOllirType()).append(" ").append(retInfo.getResultNameAndType()).append(";\n");
         }
-        ret.append("}\n\n");
+        ret.append(getIdentationString()).append("}");
+        decreaseIdentation();
 
 
         return ret.toString();
     }
 
     private String dealWithFieldDeclaration(JmmNode node, String __) {
-        return ".field private " + jmmSymbolToOllirSymbol(node) + ";";
+        return getIdentationString() + ".field private " + jmmSymbolToOllirSymbol(node) + ";";
     }
 
     private String dealWithVarDeclaration(JmmNode node, String __) {
@@ -305,10 +342,12 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
 
     private String dealWithScopeStatement(JmmNode node, String __) {
         StringBuilder ret = new StringBuilder("{\n");
+        increaseIdentation();
         for (JmmNode child : node.getChildren()) {
-            ret.append("    ").append(visit(child)).append("\n");
+            ret.append(visit(child)).append("\n");
         }
-        ret.append("}\n");
+        ret.append("}\n\n");
+        decreaseIdentation();
         return ret.toString();
     }
 
@@ -317,10 +356,10 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
 
         // BAD CODE !! If and While should have different types, but as to not interfere with other branches this is a patchwork solution
         if (node.getNumChildren() == 3) { // if
-            ret.append("if (");
+            ret.append(getIdentationString()).append("if (");
             ret.append(visit(node.getJmmChild(0), methodName)).append(") ").append(visit(node.getJmmChild(1), methodName)).append("\nelse ").append(visit(node.getJmmChild(2))).append("\n");
         } else { // while
-            ret.append("while (");
+            ret.append(getIdentationString()).append("while (");
             ret.append(visit(node.getJmmChild(0), methodName)).append(") ").append(visit(node.getJmmChild(1), methodName)).append("\n");
         }
 
@@ -347,7 +386,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         ExpressionVisitorInformation info = exprVisitor.visit(node.getJmmChild(0), methodName);
         this.tempVariables += exprVisitor.getUsedAuxVariables();
 
-        return exprInfoToString(info) + ";\n";
+        return exprInfoToString(info) + ";\n\n";
     }
 
     private String dealWithClassFieldAssignmentStatement(JmmNode node, String methodName) {
@@ -372,7 +411,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         ExpressionVisitorInformation info = exprVisitor.visit(node.getJmmChild(1), methodName);
         this.tempVariables += exprVisitor.getUsedAuxVariables();
 
-        return exprAuxInfoToString(info) + "putfield(this, " + fieldName + "." + fieldType + ", " + info.getResultNameAndType() + ").V;\n";
+        return exprAuxInfoToString(info) + getIdentationString() + "putfield(this, " + fieldName + "." + fieldType + ", " + info.getResultNameAndType() + ").V;\n\n";
     }
 
     // Please do not read this code. This is the worst code I have ever written.
@@ -396,8 +435,8 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         ExpressionVisitor expressionVisitor = new ExpressionVisitor(this.symbolTable, this.tempVariables);
         ExpressionVisitorInformation assignedExprNodeData = expressionVisitor.visit(assignedExprNode, methodName);
         this.tempVariables += expressionVisitor.getUsedAuxVariables();
-        return exprAuxInfoToString(leftVarData) + exprAuxInfoToString(assignedExprNodeData) + varName + "." + assignedExprNodeData.getOllirType()
-                + ":=." + assignedExprNodeData.getOllirType() + " " + assignedExprNodeData.getResultNameAndType() + ";\n";
+        return exprAuxInfoToString(leftVarData) + exprAuxInfoToString(assignedExprNodeData) + getIdentationString() + varName + "." + assignedExprNodeData.getOllirType()
+                + ":=." + assignedExprNodeData.getOllirType() + " " + assignedExprNodeData.getResultNameAndType() + ";\n\n";
     }
 
     private String dealWithArrayAssignmentStatement(JmmNode node, String methodName) {
@@ -420,16 +459,17 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         ExpressionVisitorInformation assignedExpressionData = assignedExpressionVisitor.visit(assignedExpression, methodName);
         this.tempVariables += assignedExpressionVisitor.getUsedAuxVariables();
 
-        return exprAuxInfoToString(indexExpressionData) + exprAuxInfoToString(assignedExpressionData) +
+        return exprAuxInfoToString(indexExpressionData) + exprAuxInfoToString(assignedExpressionData) + getIdentationString() +
                 varName + "[" + indexExpressionData.getResultNameAndType() + "]." + getArrayOllirType(arrayVarInfo.getSymbol().getType())
-                +  " :=." + assignedExpressionData.getOllirType() + " " + assignedExpressionData.getResultNameAndType() + ";\n";
+                +  " :=." + assignedExpressionData.getOllirType() + " " + assignedExpressionData.getResultNameAndType() + ";\n\n";
     }
 
+    /* Probably uneeded
     private String dealWithIntExpression(JmmNode node, String methodName) {
         ExpressionVisitor expressionVisitor = new ExpressionVisitor(this.symbolTable, this.tempVariables);
         ExpressionVisitorInformation exprInfo = expressionVisitor.visit(node, methodName);
         this.tempVariables += expressionVisitor.getUsedAuxVariables();
         return exprInfoToString(exprInfo);
     }
-
+    */
 }
