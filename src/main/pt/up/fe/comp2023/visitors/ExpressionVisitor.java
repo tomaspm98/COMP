@@ -323,7 +323,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
                 line.append(", ").append(paramExprInfo.getResultNameAndType());
             }
             line.append(")");
-            ret.setOllirType("V");
+            ret.setOllirType(methodType);
             ret.setResultName(line.toString());
             return ret;
         }
