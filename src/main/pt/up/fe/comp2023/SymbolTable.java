@@ -11,6 +11,7 @@ import java.util.*;
 
 public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable {
     final private SpecsList<Method> methods;
+    private SpecsList<String> importedClasses;
     final private List<String> imports;
     private List<Symbol> fields;
     private String className;
@@ -19,6 +20,7 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
     public SymbolTable() {
         this.methods = SpecsList.newInstance(Method.class);
+        this.importedClasses = SpecsList.newInstance(String.class);
         this.imports = new ArrayList<>();
         this.fields = new ArrayList<>();
         this.className = "";
@@ -149,9 +151,39 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
         System.err.println("Tried to find variable with name '" + symbolName + "' but it wasn't found.");
         return null;
-
-
-
     }
 
+    public Optional<SymbolInfo> getMostSpecificSymbolTry(String methodName, String symbolName) {
+        Optional<Method> methodOpt = this.getMethodTry(methodName);
+
+        if (methodOpt.isEmpty()) {
+            System.err.println("Tried to find method with name '" + methodName + "' but it wasn't found");
+            return Optional.empty();
+        }
+
+        Method method = methodOpt.get();
+
+        for (Symbol symbol : method.getVariables()) {
+            if (symbol.getName().equals(symbolName)) return Optional.of(new SymbolInfo(symbol, SymbolPosition.LOCAL));
+        }
+
+        for (Symbol symbol : method.getArguments()) {
+            if (symbol.getName().equals(symbolName)) return Optional.of(new SymbolInfo(symbol, SymbolPosition.PARAM));
+        }
+
+        for (Symbol symbol : this.fields) {
+            if (symbol.getName().equals(symbolName)) return Optional.of(new SymbolInfo(symbol, SymbolPosition.FIELD));
+        }
+
+        return Optional.empty();
+    }
+
+
+    public SpecsList<String> getImportedClasses() {
+        return importedClasses;
+    }
+
+    public void addImportedClass(String importedClass) {
+        this.importedClasses.add(importedClass);
+    }
 }

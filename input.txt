@@ -1,16 +1,49 @@
-import io;
+import Something.more.ioPlus;
+import other;
+import another.importedClass;
 
-class Fac {
-    public int computeFac(int num){
-        int num_aux;
-        if (num < 1)
-            num_aux = 1;
-        else
-            num_aux = num * (this.computeFac(num - 1));
-        return num_aux;
-    }
-    public static void main(String[] args){
-        io.println(new Fac().computeFac(10));
+class myClass {
+	int anInt;
+	boolean aBoolean;
+	String aStr;
+	String[] strArr;
+	int[] iArr;
+	ioPlus importedType;
+	madeUp madeUpType;
 
-    }
+	public static void method1(String[] strings, int[] ints, madeUp madeUpArgument, int intArg) {
+
+	    //test local declaration
+	    int[] myLocalIntArr;
+	    String[] myLocalStringArr;
+	    ioPlus[] myLocalImportedArr;
+	    madeUp[] myLocalMadeUpArr;
+	    ioPlus myLocalImported;
+	    madeUp myLocalMadeUp;
+	    int myLocalInt;
+
+	    //test imported method call with random arguments, simple statement
+	    myLocalImported.randomMethod();
+	    myLocalImported.otherRandomMethod(myLocalIntArr);
+	    myLocalImported.anotherRandomMethod(myLocalMadeUp);
+	    myLocalImported.yetAnotherRandomMethod(strings, ints, madeUpArgument, myLocalMadeUp, myLocalImported);
+	    myLocalImported.fifthRandomMethod(aStr, strArr, iArr, myLocalIntArr, importedType, myLocalImported);
+
+	    //test simple assignment
+	    myLocalInt = 2;
+	    myLocalInt = anInt;
+	    myLocalInt = anInt + 2;
+	    myLocalInt = myLocalInt + anInt + 2;
+	    myLocalInt = myLocalInt * 2 + 3 * intArg;
+
+	    this.anInt = 5 * 10 + myLocalInt;
+	    intArg = 1;
+
+
+	}
+
+
+	public static void main(String[] args) {
+		ioPlus.printHelloWorld();
+	}
 }

@@ -103,6 +103,9 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         StringBuilder ret = new StringBuilder();
         for (JmmNode child : node.getChildren()) {
             ret.append(child.get("pathFragment")).append(child.getIndexOfSelf() == node.getChildren().size() - 1 ? "" : ".");
+            if (child.getIndexOfSelf() == node.getChildren().size() - 1) {
+                this.table.addImportedClass(child.get("pathFragment"));
+            }
         }
         this.table.addImport(ret.toString());
         return "";

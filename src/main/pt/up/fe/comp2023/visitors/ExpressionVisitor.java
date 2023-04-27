@@ -9,6 +9,7 @@ import pt.up.fe.comp2023.node.information.Method;
 import pt.up.fe.comp2023.utils.ExpressionVisitorInformation;
 import pt.up.fe.comp2023.utils.SymbolInfo;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,10 +40,54 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         return ret;
     }
 
-    private ExpressionVisitorInformation visitExpressionAndStoreInfo(ExpressionVisitorInformation storage, JmmNode toVisit) {
-        ExpressionVisitorInformation exprNodeInfo = visit(toVisit);
+    private ExpressionVisitorInformation visitExpressionAndStoreInfo(ExpressionVisitorInformation storage, JmmNode toVisit, String methodName) {
+        ExpressionVisitorInformation exprNodeInfo = visit(toVisit, methodName);
         storage.addAuxLines(exprNodeInfo.getAuxLines());
         return exprNodeInfo;
+    }
+
+    private String getImportedMethodReturnType(JmmNode methodCallNode, String outerMethodName) {
+        JmmNode parent = methodCallNode.getJmmParent();
+        ;
+        Optional<Method> optMethod = this.symbolTable.getMethodTry(outerMethodName);
+
+        if (optMethod.isEmpty()) {
+            System.err.println("Tried to find method '" + outerMethodName + "' in symbol table but it couldn't be found!");
+            return "MIDERROR";
+        }
+
+        Method outerMethod = optMethod.get();
+
+
+        switch (parent.getKind()) {
+            case "SimpleStatement" -> {
+                return "V";
+            }
+
+            case "ClassFieldAssignment" -> {
+                String fieldName = parent.getJmmChild(0).get("varName");
+                for (var field : symbolTable.getFields()) {
+                    if (field.getName().equals(fieldName)) return OllirGenerator.jmmTypeToOllirType(field.getType());
+                }
+                return "BIGERROR";
+            }
+
+            case "Assignment" -> {
+                String varName = parent.getJmmChild(0).get("varName");
+                SymbolInfo symbolInfo = symbolTable.getMostSpecificSymbol(outerMethodName, varName);
+                return OllirGenerator.jmmTypeToOllirType(symbolInfo.getSymbol().getType());
+            }
+
+            case "ArrayAssignment" -> {
+                String varName = parent.getJmmChild(0).get("varName");
+                SymbolInfo symbolInfo = symbolTable.getMostSpecificSymbol(outerMethodName, varName);
+                return OllirGenerator.getArrayOllirType(symbolInfo.getSymbol().getType());
+            }
+
+            default -> {
+                return "HUGEERROR";
+            }
+        }
     }
 
     // End Utility methods
@@ -70,7 +115,71 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         String calledMethod = node.get("methodName");
         Optional<Method> optMethod = this.symbolTable.getMethodTry(calledMethod);
 
+
         if (optMethod.isEmpty()) {
+
+            // I take back my previous comment, THIS is the worst code I've ever seen / written
+            // avert thine eyes, lest thee seeketh the truth
+            // TODO High priority refactor
+            JmmNode classExprNode = node.getJmmChild(0);
+            Optional<SymbolInfo> symbolInfo = symbolTable.getMostSpecificSymbolTry(methodName, classExprNode.get("value"));
+            if (classExprNode.getKind().equals("Identifier") && symbolInfo.isPresent() &&
+                    !(symbolTable.getImportedClasses().stream().filter(
+                            s -> s.equals(symbolInfo.get().getSymbol().getType().getName())
+                    ).toList().isEmpty())
+            ) {
+                if (node.getJmmParent().getKind().equals("SimpleStatement")) {
+                    StringBuilder line = new StringBuilder();
+                    line.append("invokestatic(")
+                            .append(classExprNode.get("value"))
+                            .append(", \"")
+                            .append(calledMethod)
+                            .append("\"");
+
+                    // Probably bad code but it probably works
+                    List<JmmNode> parameterExpressions = (node.getChildren().size() > 1) ? node.getChildren().subList(1, node.getNumChildren()) : new ArrayList<>();
+                    for (JmmNode childNode : parameterExpressions) {
+                        ExpressionVisitorInformation paramExprInfo = visit(childNode, methodName);
+                        ret.addAuxLines(paramExprInfo.getAuxLines());
+                        line.append(", ").append(paramExprInfo.getResultNameAndType());
+                    }
+                    line.append(")");
+
+                    ret.setOllirType("V");
+                    ret.setResultName(line.toString());
+                    return ret;
+                }
+                String lastAuxVar = getNewAuxVariable();
+                String methodType = getImportedMethodReturnType(node, methodName);
+
+                lastAuxLine.append(lastAuxVar).append(".").append(methodType)
+                        .append(" :=.").append(methodType);
+                lastAuxLine.append(" invokestatic(")
+                        .append(classExprNode.get("value"))
+                        .append(", \"")
+                        .append(calledMethod)
+                        .append("\"");
+
+                // Probably bad code but it probably works
+                List<JmmNode> parameterExpressions = (node.getChildren().size() > 1) ? node.getChildren().subList(1, node.getNumChildren()) : new ArrayList<>();
+                for (JmmNode childNode : parameterExpressions) {
+                    ExpressionVisitorInformation paramExprInfo = visit(childNode, methodName);
+                    ret.addAuxLines(paramExprInfo.getAuxLines());
+                    lastAuxLine.append(", ").append(paramExprInfo.getResultNameAndType());
+                }
+                lastAuxLine.append(").").append(methodType);
+
+                ret.addAuxLine(lastAuxLine.toString());
+                ret.setOllirType(methodType);
+                ret.setResultName(lastAuxVar);
+                return ret;
+            }
+
+            else if () {
+                
+            }
+
+
             //TODO maybe add report
             System.err.println("Tried to search for method '" + calledMethod + "' but it wasn't found.");
             return ret;
@@ -78,26 +187,24 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
 
         Method method = optMethod.get();
 
-        ExpressionVisitorInformation classNameInfo = visit(node.getJmmChild(0));
+        ExpressionVisitorInformation classNameInfo = visit(node.getJmmChild(0), methodName);
         ret.addAuxLines(classNameInfo.getAuxLines());
 
         String lastAuxVar = getNewAuxVariable();
         String methodType = OllirGenerator.jmmTypeToOllirType(method.getRetType());
 
-        lastAuxLine.append(lastAuxVar).append(methodType)
-                .append(" =.").append(methodType);
+        lastAuxLine.append(lastAuxVar).append(".").append(methodType)
+                .append(" :=.").append(methodType);
         lastAuxLine.append(" invokevirtual(")
                 .append(classNameInfo.getResultNameAndType())
-                .append(".")
-                .append(classNameInfo.getOllirType())
                 .append(", \"")
                 .append(calledMethod)
                 .append("\"");
 
         // Probably bad code but it probably works
-        List<JmmNode> parameterExpressions = node.getChildren().subList(1, node.getNumChildren() - 1);
+        List<JmmNode> parameterExpressions = (node.getChildren().size() > 1) ? node.getChildren().subList(1, node.getNumChildren()) : new ArrayList<>();
         for (JmmNode childNode : parameterExpressions) {
-            ExpressionVisitorInformation paramExprInfo = visit(childNode);
+            ExpressionVisitorInformation paramExprInfo = visit(childNode, methodName);
             ret.addAuxLines(paramExprInfo.getAuxLines());
             lastAuxLine.append(", ").append(paramExprInfo.getResultNameAndType());
         }
@@ -128,7 +235,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
 
         JmmNode exprNode = node.getObject("array", JmmNode.class);
 
-        var exprNodeInfo = visitExpressionAndStoreInfo(ret, exprNode);
+        var exprNodeInfo = visitExpressionAndStoreInfo(ret, exprNode, methodName);
         retName.append(exprNodeInfo.getResultNameAndType()).append(")");
 
         //-- return type
@@ -158,8 +265,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         JmmNode arrayNode = node.getObject("array", JmmNode.class);
         JmmNode indexNode = node.getObject("index", JmmNode.class);
 
-        ExpressionVisitorInformation arrayExprInfo = visitExpressionAndStoreInfo(ret, arrayNode);
-        ExpressionVisitorInformation indexExprInfo = visitExpressionAndStoreInfo(ret, indexNode);
+        ExpressionVisitorInformation arrayExprInfo = visitExpressionAndStoreInfo(ret, arrayNode, methodName);
+        ExpressionVisitorInformation indexExprInfo = visitExpressionAndStoreInfo(ret, indexNode, methodName);
 
         //-- ExprName
         retName.append(arrayExprInfo.getResultName());
@@ -182,7 +289,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
 
     private ExpressionVisitorInformation dealWithParenthesis(JmmNode node, String methodName) {
         JmmNode innerExprNode = node.getJmmChild(0);
-        return visit(innerExprNode);
+        return visit(innerExprNode, methodName);
     }
 
     private ExpressionVisitorInformation dealWithUnaryBoolOp(JmmNode node, String methodName) { //TODO maybe this is not it chief
@@ -190,7 +297,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         ExpressionVisitorInformation ret = new ExpressionVisitorInformation(false);
         JmmNode expressionNode = node.getObject("bool", JmmNode.class);
 
-        ExpressionVisitorInformation exprInfo = visitExpressionAndStoreInfo(ret, expressionNode);
+        ExpressionVisitorInformation exprInfo = visitExpressionAndStoreInfo(ret, expressionNode, methodName);
         retName.append(exprInfo.getResultNameAndType());
 
         ret.setResultName(retName.toString());
@@ -201,12 +308,12 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
     private ExpressionVisitorInformation dealWithArithmeticBinaryOp(JmmNode node, String methodName) {
         ExpressionVisitorInformation ret = new ExpressionVisitorInformation();
 
-        JmmNode arg1Node = node.getObject("arg1", JmmNode.class);
-        JmmNode arg2Node = node.getObject("arg2", JmmNode.class);
-        String opAndType = node.get(" op") + ".i32 ";
+        JmmNode arg1Node = node.getJmmChild(0);
+        JmmNode arg2Node = node.getJmmChild(1);
+        String opAndType = node.get("op") + ".i32 ";
 
-        ExpressionVisitorInformation arg1Info = visitExpressionAndStoreInfo(ret, arg1Node);
-        ExpressionVisitorInformation arg2Info = visitExpressionAndStoreInfo(ret, arg2Node);
+        ExpressionVisitorInformation arg1Info = visitExpressionAndStoreInfo(ret, arg1Node, methodName);
+        ExpressionVisitorInformation arg2Info = visitExpressionAndStoreInfo(ret, arg2Node, methodName);
 
         String lastAuxVar = getNewAuxVariable();
         String type = "i32";
@@ -228,8 +335,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         JmmNode arg1Node = node.getObject("arg1", JmmNode.class);
         JmmNode arg2Node = node.getObject("arg2", JmmNode.class);
 
-        ExpressionVisitorInformation arg1Info = visitExpressionAndStoreInfo(ret, arg1Node);
-        ExpressionVisitorInformation arg2Info = visitExpressionAndStoreInfo(ret, arg2Node);
+        ExpressionVisitorInformation arg1Info = visitExpressionAndStoreInfo(ret, arg1Node, methodName);
+        ExpressionVisitorInformation arg2Info = visitExpressionAndStoreInfo(ret, arg2Node, methodName);
 
         retName.append(arg1Info.getResultNameAndType()).append(opAndType).append(arg2Info.getResultNameAndType());
         ret.setResultName(retName.toString());
@@ -242,12 +349,12 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
     private ExpressionVisitorInformation dealWithBoolBinaryOp(JmmNode node, String methodName) {
         ExpressionVisitorInformation ret = new ExpressionVisitorInformation();
 
-        JmmNode arg1Node = node.getObject("arg1", JmmNode.class);
-        JmmNode arg2Node = node.getObject("arg2", JmmNode.class);
-        String opAndType = node.get(" op") + ".bool ";
+        JmmNode arg1Node = node.getJmmChild(0);
+        JmmNode arg2Node = node.getJmmChild(1);
+        String opAndType = node.get("op") + ".bool ";
 
-        ExpressionVisitorInformation arg1Info = visitExpressionAndStoreInfo(ret, arg1Node);
-        ExpressionVisitorInformation arg2Info = visitExpressionAndStoreInfo(ret, arg2Node);
+        ExpressionVisitorInformation arg1Info = visitExpressionAndStoreInfo(ret, arg1Node, methodName);
+        ExpressionVisitorInformation arg2Info = visitExpressionAndStoreInfo(ret, arg2Node, methodName);
 
         String lastAuxVar = getNewAuxVariable();
         String type = "bool";
@@ -270,8 +377,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         JmmNode arg1Node = node.getObject("arg1", JmmNode.class);
         JmmNode arg2Node = node.getObject("arg2", JmmNode.class);
 
-        ExpressionVisitorInformation arg1Info = visitExpressionAndStoreInfo(ret, arg1Node);
-        ExpressionVisitorInformation arg2Info = visitExpressionAndStoreInfo(ret, arg2Node);
+        ExpressionVisitorInformation arg1Info = visitExpressionAndStoreInfo(ret, arg1Node, methodName);
+        ExpressionVisitorInformation arg2Info = visitExpressionAndStoreInfo(ret, arg2Node, methodName);
 
         retName.append(arg1Info.getResultNameAndType()).append(opAndType).append(arg2Info.getResultNameAndType());
         ret.setResultName(retName.toString());
@@ -291,7 +398,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         String ollirTypeName = OllirGenerator.jmmTypeToOllirType(node.get("typeName"));
         JmmNode sizeExpression = node.getObject("size", JmmNode.class);
 
-        ExpressionVisitorInformation sizeInfo = visitExpressionAndStoreInfo(ret, sizeExpression);
+        ExpressionVisitorInformation sizeInfo = visitExpressionAndStoreInfo(ret, sizeExpression, methodName);
 
         retName.append(sizeInfo.getResultNameAndType()).append(")");
 
@@ -352,12 +459,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
 
         switch(symbolInfo.getSymbolPosition()) {
             case LOCAL -> {
-                for (Symbol local : method.getVariables()) {
-                    if (local.getName().equals(value)) {
-                        ret.setResultName(value);
-                        ret.setOllirType(OllirGenerator.jmmTypeToOllirType(local.getType()));
-                    }
-                }
+                ret.setResultName(symbolInfo.getSymbol().getName());
+                ret.setOllirType(OllirGenerator.jmmTypeToOllirType(symbolInfo.getSymbol().getType()));
             }
             case PARAM -> {
                 for (int i = 0; i < method.getArguments().size(); i++) {
@@ -374,7 +477,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
                     if (field.getName().equals(value)) {
                         String varAux = getNewAuxVariable();
                         String fieldType = OllirGenerator.jmmTypeToOllirType(symbolInfo.getSymbol().getType());
-                        String auxLine = varAux + "." + fieldType + " :=." + fieldType + " getfield(this, " + field.getName() + "." + fieldType + ")." + fieldType;
+                        String auxLine = varAux + "." + fieldType + " :=." + fieldType + " getfield(this, " + field.getName() + "." + fieldType + ")." + fieldType + ";";
                         ret.addAuxLine(auxLine);
                         ret.setResultName(varAux);
                         ret.setOllirType(fieldType);
@@ -383,7 +486,6 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
             }
         }
 
-        ret.setOllirType("bool");
         return ret;
     }
 
