@@ -12,13 +12,12 @@ import pt.up.fe.comp2023.utils.SymbolInfo;
 import pt.up.fe.comp2023.utils.SymbolPosition;
 import pt.up.fe.specs.util.collections.SpecsList;
 
-import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 
 public class OllirGenerator extends AJmmVisitor<String, String> {
 
-    private static int identantion = 0;
+    private static int indentation = 0;
     private final SymbolTable symbolTable;
     private final SpecsList<Report> reports;
     private int tempVariables;
@@ -32,7 +31,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
 
     // Utility functions
 
-    public static String jmmTypeToOllirType(String jmmType) {
+    public static String jmmTypeToOllirType(String jmmType, String className) {
         switch (jmmType) {
             case "int" -> {
                 return "i32";
@@ -43,26 +42,29 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             case "void" -> {
                 return "V";
             }
+            case "this" -> {
+                return className;
+            }
             default -> {
                 return jmmType;
             }
         }
     }
 
-    public static String jmmTypeToOllirType(Type jmmType) {
+    public static String jmmTypeToOllirType(Type jmmType, String className) {
         StringBuilder ret = new StringBuilder();
         if (jmmType.isArray()) {
             ret.append("array.");
         }
-        return getString(jmmType, ret);
+        return getString(jmmType, ret, className);
     }
 
-    public static String getArrayOllirType(Type jmmType) {
+    public static String getArrayOllirType(Type jmmType, String className) {
         StringBuilder ret = new StringBuilder();
-        return getString(jmmType, ret);
+        return getString(jmmType, ret, className);
     }
 
-    private static String getString(Type jmmType, StringBuilder ret) {
+    private static String getString(Type jmmType, StringBuilder ret, String className) {
         switch (jmmType.getName()) {
             case "int" -> {
                 ret.append("i32");
@@ -73,6 +75,9 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             case "void" -> {
                 ret.append("V");
             }
+            case "this" -> {
+                ret.append(className);
+            }
             default -> {
                 ret.append(jmmType.getName());
             }
@@ -80,7 +85,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         return ret.toString();
     }
 
-    public static String jmmSymbolToOllirSymbol(Symbol symbol) {
+    public static String jmmSymbolToOllirSymbol(Symbol symbol, String className) {
         String name = symbol.getName();
         Type type = symbol.getType();
 
@@ -90,24 +95,20 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             ret.append("array.");
         }
 
-        ret.append(jmmTypeToOllirType(type.getName()));
+        ret.append(jmmTypeToOllirType(type.getName(), className));
         return ret.toString();
     }
 
-    public static int getIdentantion() {
-        return identantion;
-    }
-
     public static void increaseIdentation() {
-        identantion++;
+        indentation++;
     }
 
     public static void decreaseIdentation() {
-        identantion--;
+        indentation--;
     }
 
     public static String getIdentationString() {
-        return "\t".repeat(identantion);
+        return "\t".repeat(indentation);
     }
 
     @Override
@@ -180,7 +181,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
                 for (Symbol local : method.getVariables()) {
                     if (local.getName().equals(jmmVarName)) {
                         evi.setResultName(jmmVarName);
-                        evi.setOllirType(OllirGenerator.jmmTypeToOllirType(local.getType()));
+                        evi.setOllirType(OllirGenerator.jmmTypeToOllirType(local.getType(), symbolTable.getClassName()));
                     }
                 }
             }
@@ -189,7 +190,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
                     Symbol param = method.getArguments().get(i);
                     if (param.getName().equals(jmmVarName)) {
                         evi.setResultName("$" + i + "." + jmmVarName);
-                        evi.setOllirType(OllirGenerator.jmmTypeToOllirType(param.getType()));
+                        evi.setOllirType(OllirGenerator.jmmTypeToOllirType(param.getType(), symbolTable.getClassName()));
                     }
                 }
 
@@ -199,7 +200,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
                     if (field.getName().equals(jmmVarName)) {
                         String varAux = "aux" + tempVariables;
                         this.tempVariables++;
-                        String fieldType = OllirGenerator.jmmTypeToOllirType(symbolInfo.getSymbol().getType());
+                        String fieldType = OllirGenerator.jmmTypeToOllirType(symbolInfo.getSymbol().getType(), symbolTable.getClassName());
                         String auxLine = varAux + "." + fieldType + " :=." + fieldType + " getfield(this, " + field.getName() + "." + fieldType + ")." + fieldType;
                         evi.addAuxLine(auxLine);
                         evi.setResultName(varAux);
@@ -289,14 +290,14 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         for (int i = 0; i < method.getArguments().size(); i++) {
             Symbol argument = method.getArguments().get(i);
 
-            ret.append(jmmSymbolToOllirSymbol(argument));
+            ret.append(jmmSymbolToOllirSymbol(argument, symbolTable.getClassName()));
 
             if (i != method.getArguments().size() - 1) { // is not last element
                 ret.append(", ");
             }
         }
 
-        ret.append(").").append(jmmTypeToOllirType(method.getRetType().getName())).append(" {\n");
+        ret.append(").").append(jmmTypeToOllirType(method.getRetType().getName(), symbolTable.getClassName())).append(" {\n");
         increaseIdentation();
 
         List<JmmNode> methodStatements = node.getChildren().stream().filter((child) -> child.getKind().equals("MethodStatement")).map((child) -> child.getJmmChild(0)) // get statement inside methodStatement
@@ -337,7 +338,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             ret.append("array.");
         }
 
-        ret.append(jmmTypeToOllirType(node.get("typeName")));
+        ret.append(jmmTypeToOllirType(node.get("typeName"), symbolTable.getClassName()));
         return ret.toString();
     }
 
@@ -400,7 +401,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         //TODO create method for this in symbolTable
         for (Symbol symbol : symbolTable.getFields()) {
             if (symbol.getName().equals(fieldName)) {
-                fieldType = jmmTypeToOllirType(symbol.getType());
+                fieldType = jmmTypeToOllirType(symbol.getType(), symbolTable.getClassName());
                 break;
             }
         }
@@ -435,7 +436,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             ExpressionVisitor expressionVisitor = new ExpressionVisitor(this.symbolTable, this.tempVariables);
             ExpressionVisitorInformation assignedExprNodeData = expressionVisitor.visit(assignedExprNode, methodName);
             this.tempVariables += expressionVisitor.getUsedAuxVariables();
-            return exprAuxInfoToString(assignedExprNodeData) + getIdentationString() + "putfield(this, " + jmmSymbolToOllirSymbol(symbolInfoOpt.get().getSymbol()) + ", " + assignedExprNodeData.getResultNameAndType() + ").V;\n\n";
+            return exprAuxInfoToString(assignedExprNodeData) + getIdentationString() + "putfield(this, " + jmmSymbolToOllirSymbol(symbolInfoOpt.get().getSymbol(), symbolTable.getClassName()) + ", " + assignedExprNodeData.getResultNameAndType() + ").V;\n\n";
         }
 
         Optional<Method> optMethod = this.symbolTable.getMethodTry(methodName);
@@ -485,12 +486,12 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
 
         String lastLine = "\n";
         if (node.getJmmChild(1).getKind().equals("ArrayInstantiation") || node.getJmmChild(1).getKind().equals("Instantiation")) {
-            lastLine = getIdentationString() + "invokespecial(" + varName + "[" + indexExpressionData.getResultNameAndType() + "]." + getArrayOllirType(arrayVarInfo.getSymbol().getType())
+            lastLine = getIdentationString() + "invokespecial(" + varName + "[" + indexExpressionData.getResultNameAndType() + "]." + getArrayOllirType(arrayVarInfo.getSymbol().getType(), symbolTable.getClassName())
                     + ",\"<init>\").V;\n\n";
         }
 
         return exprAuxInfoToString(indexExpressionData) + exprAuxInfoToString(assignedExpressionData) + getIdentationString() +
-                varName + "[" + indexExpressionData.getResultNameAndType() + "]." + getArrayOllirType(arrayVarInfo.getSymbol().getType())
+                varName + "[" + indexExpressionData.getResultNameAndType() + "]." + getArrayOllirType(arrayVarInfo.getSymbol().getType(), symbolTable.getClassName())
                 +  " :=." + assignedExpressionData.getOllirType() + " " + assignedExpressionData.getResultNameAndType() + ";\n" + lastLine;
     }
 
