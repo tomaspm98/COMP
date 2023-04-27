@@ -20,6 +20,7 @@ public class BooleanConditions extends SymbolTableVisitor implements StageResult
     private List<Report> reports;
 
     public BooleanConditions(SymbolTable symbolTable, JmmNode rootNode) {
+        super(symbolTable);
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();

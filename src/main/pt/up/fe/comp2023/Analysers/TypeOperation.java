@@ -20,6 +20,7 @@ public class TypeOperation extends SymbolTableVisitor implements StageResult{
     private List<Report> reports;
 
     public TypeOperation(SymbolTable symbolTable, JmmNode rootNode) {
+        super(symbolTable);
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();

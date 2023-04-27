@@ -24,6 +24,7 @@ public class MethodCallEqualsMethodDeclaration extends SymbolTableVisitor implem
     private final List<Report> reports;
 
     public MethodCallEqualsMethodDeclaration(SymbolTable symbolTable, JmmNode rootNode) {
+        super(symbolTable);
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();

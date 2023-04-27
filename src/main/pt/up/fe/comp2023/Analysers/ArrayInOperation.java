@@ -28,6 +28,7 @@ public class ArrayInOperation extends SymbolTableVisitor implements StageResult 
     private final List<Report>  reports;
 
     public ArrayInOperation(SymbolTable symbolTable, JmmNode rootNode) {
+        super(symbolTable);
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();
