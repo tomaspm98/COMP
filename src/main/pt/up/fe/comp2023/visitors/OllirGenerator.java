@@ -273,6 +273,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             JmmNode retExpressionNode = node.getChildren().get(node.getNumChildren() - 1).getJmmChild(0);
             ExpressionVisitor retExprVisitor = new ExpressionVisitor(this.symbolTable, this.tempVariables);
             ExpressionVisitorInformation retInfo = retExprVisitor.visit(retExpressionNode, methodName);
+            this.tempVariables += retExprVisitor.getUsedAuxVariables();
             ret.append( exprAuxInfoToString(retInfo));
             ret.append("ret.");
             ret.append(retInfo.getOllirType()).append(" ").append(retInfo.getResultNameAndType()).append(";\n");
@@ -394,6 +395,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
 
         ExpressionVisitor expressionVisitor = new ExpressionVisitor(this.symbolTable, this.tempVariables);
         ExpressionVisitorInformation assignedExprNodeData = expressionVisitor.visit(assignedExprNode, methodName);
+        this.tempVariables += expressionVisitor.getUsedAuxVariables();
         return exprAuxInfoToString(leftVarData) + exprAuxInfoToString(assignedExprNodeData) + varName + "." + assignedExprNodeData.getOllirType()
                 + ":=." + assignedExprNodeData.getOllirType() + " " + assignedExprNodeData.getResultNameAndType() + ";\n";
     }
@@ -407,7 +409,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             return null;
         }
 
-        JmmNode arrayIndexExpression =  node.getJmmChild(0);
+        JmmNode arrayIndexExpression =  node.getJmmChild(0).getJmmChild(0);
         JmmNode assignedExpression =  node.getJmmChild(1);
 
         ExpressionVisitor indexExpressionVisitor = new ExpressionVisitor(this.symbolTable, this.tempVariables);
@@ -419,7 +421,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         this.tempVariables += assignedExpressionVisitor.getUsedAuxVariables();
 
         return exprAuxInfoToString(indexExpressionData) + exprAuxInfoToString(assignedExpressionData) +
-                varName + "[" + indexExpressionData.getResultNameAndType() + "]." + jmmTypeToOllirType(arrayVarInfo.getSymbol().getType())
+                varName + "[" + indexExpressionData.getResultNameAndType() + "]." + getArrayOllirType(arrayVarInfo.getSymbol().getType())
                 +  " :=." + assignedExpressionData.getOllirType() + " " + assignedExpressionData.getResultNameAndType() + ";\n";
     }
 

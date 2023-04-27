@@ -39,6 +39,15 @@ class myClass {
 	    this.anInt = 5 * 10 + myLocalInt;
 	    intArg = 1;
 
+	    myLocalIntArr[0] = 0;
+	    myLocalIntArr[1+2] = 1*3;
+	    myLocalIntArr[1*2+3] = myLocalInt;
+	    myLocalInt = myLocalIntArr[0];
+	    myLocalInt = myLocalIntArr[1+2];
+	    myLocalIntArr[1+2] = myLocalIntArr[2*3];
+	    ints[0] = 0;
+	    ints[1] = myLocalInt;
+
 
 	}
 
