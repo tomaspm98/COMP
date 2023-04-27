@@ -17,6 +17,7 @@ public class InvalidAssignments extends SymbolTableVisitor {
     private SymbolTable symbolTable;
 
     public InvalidAssignments(SymbolTable symbolTable, JmmNode rootNode) {
+        super(symbolTable);
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();

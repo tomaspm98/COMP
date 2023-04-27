@@ -17,6 +17,7 @@ public class InvalidArrayOperations extends SymbolTableVisitor {
     private List<Report> reports;
 
     public InvalidArrayOperations(SymbolTable symbolTable, JmmNode rootNode) {
+        super(symbolTable);
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();

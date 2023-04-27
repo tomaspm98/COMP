@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AssignType extends SymbolTableVisitor implements StageResult{
+public class AssignType extends SymbolTableVisitor implements StageResult {
     private SymbolTable symbolTable;
     private List<Report> reports;
 
@@ -23,12 +23,12 @@ public class AssignType extends SymbolTableVisitor implements StageResult{
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();
-        addVisit("Assignment",this::assignVisit);
+        addVisit("Assignment", this::assignVisit);
         visit(rootNode);
     }
 
     public String assignVisit(JmmNode node, String dummy) {
-        int  numChildren = node.getNumChildren();
+        int numChildren = node.getNumChildren();
         JmmNode leftChild = null;
         JmmNode rightChild = null;
 
@@ -61,17 +61,17 @@ public class AssignType extends SymbolTableVisitor implements StageResult{
             return "";
         }
 
-        if (rightIdType.equals("new")){
+        if (rightIdType.equals("new")) {
 
             JmmNode grandchild = rightChild.getJmmChild(0);
             //System.out.println("---> "+ grandchild);
 
             //só pode ser ArrayDeclaration ou Id
 
-            if(grandchild.getKind().equals("ArrayInstantiation")){
+            if (grandchild.getKind().equals("ArrayInstantiation")) {
                 rightIdType = grandchild.getJmmChild(0).get("type");
 
-            }else{ // ID
+            } else { // ID
                 //System.out.println("-------->" + grandchild.get("name"));
                 //System.out.println("tou aqui dentro");
                 //rightIdType = leftIdType;
@@ -88,22 +88,22 @@ public class AssignType extends SymbolTableVisitor implements StageResult{
 
         }
 
-        if(!leftIdType.equals(rightIdType)) {
-            if (node.hasAttribute("line")) {
-                this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
-                        Integer.valueOf(-1), Integer.valueOf(-1),
-                        "Assignment with wrong types"));
-            }
+        if (!leftIdType.equals(rightIdType)) {
+            this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    Integer.valueOf(-1), Integer.valueOf(-1),
+                    "Assignment with wrong types"));
+
+        }
            /* else {
                 this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
                         Integer.valueOf(-1), Integer.valueOf(-1),
                         "Assignment with wrong types"));
             }*/
 
-        }
 
-        return "";
-    }
+
+        return"";
+}
 
     public Type getIdType(JmmNode node){
         JmmNode parentNode = node;

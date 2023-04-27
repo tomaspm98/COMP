@@ -23,6 +23,7 @@ public class ArrayAccessOverArray extends SymbolTableVisitor implements StageRes
     private List<Report> reports;
 
     public ArrayAccessOverArray(SymbolTable symbolTable, JmmNode root) {
+        super(symbolTable);
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();
