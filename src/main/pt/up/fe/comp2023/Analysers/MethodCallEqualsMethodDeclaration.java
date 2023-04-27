@@ -81,7 +81,7 @@ public class MethodCallEqualsMethodDeclaration extends SymbolTableVisitor implem
         var currentNode = node;
         var father=node;
 
-        while(!currentNode.getKind().equals("MethodDeclaration") &&
+        while(!currentNode.getKind().equals("methodDeclaration") &&
                 !currentNode.getKind().equals("Program")){
             currentNode = currentNode.getJmmParent();
 

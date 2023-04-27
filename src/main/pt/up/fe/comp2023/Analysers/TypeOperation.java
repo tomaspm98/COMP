@@ -42,7 +42,7 @@ public class TypeOperation extends SymbolTableVisitor implements StageResult{
 
     public String getIdType(JmmNode node){
         JmmNode parentNode = node;
-        while (parentNode != null && !parentNode.getKind().equals("MethodDeclaration")) {
+        while (parentNode != null && !parentNode.getKind().equals("methodDeclaration")) {
             parentNode = parentNode.getJmmParent();
         }
 
@@ -104,7 +104,7 @@ public class TypeOperation extends SymbolTableVisitor implements StageResult{
             return getIdType(node);
         }
 
-        if (myKind.equals("MethodDeclaration")) {
+        if (myKind.equals("methodDeclaration")) {
             return "null";
         }
 
