@@ -67,7 +67,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
             case "ClassFieldAssignment" -> {
                 String fieldName = parent.getJmmChild(0).get("varName");
                 for (var field : symbolTable.getFields()) {
-                    if (field.getName().equals(fieldName)) return OllirGenerator.jmmTypeToOllirType(field.getType());
+                    if (field.getName().equals(fieldName)) return OllirGenerator.jmmTypeToOllirType(field.getType(), symbolTable.getClassName());
                 }
                 return "BIGERROR";
             }
@@ -75,13 +75,13 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
             case "Assignment" -> {
                 String varName = parent.getJmmChild(0).get("varName");
                 SymbolInfo symbolInfo = symbolTable.getMostSpecificSymbol(outerMethodName, varName);
-                return OllirGenerator.jmmTypeToOllirType(symbolInfo.getSymbol().getType());
+                return OllirGenerator.jmmTypeToOllirType(symbolInfo.getSymbol().getType(), symbolTable.getClassName());
             }
 
             case "ArrayAssignment" -> {
                 String varName = parent.getJmmChild(0).get("varName");
                 SymbolInfo symbolInfo = symbolTable.getMostSpecificSymbol(outerMethodName, varName);
-                return OllirGenerator.getArrayOllirType(symbolInfo.getSymbol().getType());
+                return OllirGenerator.getArrayOllirType(symbolInfo.getSymbol().getType(), symbolTable.getClassName());
             }
 
             default -> {
@@ -122,7 +122,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         }
 
         Method method = optMethod.get();
-        String methodType = OllirGenerator.jmmTypeToOllirType(method.getRetType());
+
+        String methodType = OllirGenerator.jmmTypeToOllirType(method.getRetType(), symbolTable.getClassName());
 
         if (node.getJmmParent().getKind().equals("SimpleStatement")) {
             StringBuilder line = new StringBuilder();
@@ -197,8 +198,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
             ) {
                 if (node.getJmmParent().getKind().equals("SimpleStatement")) {
                     StringBuilder line = new StringBuilder();
-                    line.append(OllirGenerator.getIdentationString()).append("invokestatic(")
-                            .append(OllirGenerator.jmmTypeToOllirType(symbolInfo.get().getSymbol().getType()))
+                    line.append("invokestatic(")
+                            .append(OllirGenerator.jmmTypeToOllirType(symbolInfo.get().getSymbol().getType(), symbolTable.getClassName()))
                             .append(", \"")
                             .append(calledMethod)
                             .append("\"");
@@ -305,7 +306,29 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         ret.addAuxLines(classNameInfo.getAuxLines());
 
         String lastAuxVar = getNewAuxVariable();
-        String methodType = OllirGenerator.jmmTypeToOllirType(method.getRetType());
+        String methodType = OllirGenerator.jmmTypeToOllirType(method.getRetType(), symbolTable.getClassName());
+
+        if (node.getJmmParent().getKind().equals("SimpleStatement")) { // No auxiliary variable needed
+            StringBuilder line = new StringBuilder();
+            line.append("invokevirtual(")
+                    .append(classNameInfo.getResultNameAndType())
+                    .append(", \"")
+                    .append(calledMethod)
+                    .append("\"");
+
+            // Probably bad code but it probably works
+            List<JmmNode> parameterExpressions = (node.getChildren().size() > 1) ? node.getChildren().subList(1, node.getNumChildren()) : new ArrayList<>();
+            for (JmmNode childNode : parameterExpressions) {
+                ExpressionVisitorInformation paramExprInfo = visit(childNode, methodName);
+                ret.addAuxLines(paramExprInfo.getAuxLines());
+                line.append(", ").append(paramExprInfo.getResultNameAndType());
+            }
+            line.append(")");
+            ret.setOllirType("V");
+            ret.setResultName(line.toString());
+            return ret;
+        }
+
 
         if (node.getJmmParent().getKind().equals("SimpleStatement")) { // No auxiliary variable needed
             StringBuilder line = new StringBuilder();
@@ -419,7 +442,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
 
         //--
         ret.setResultName(retName.toString());
-        ret.setOllirType(OllirGenerator.getArrayOllirType(arrayVarInfo.getSymbol().getType()));
+        ret.setOllirType(OllirGenerator.getArrayOllirType(arrayVarInfo.getSymbol().getType(), symbolTable.getClassName()));
         return ret;
     }
 
@@ -531,7 +554,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         StringBuilder retName = new StringBuilder("new(array, ");
         ExpressionVisitorInformation ret = new ExpressionVisitorInformation();
 
-        String ollirTypeName = OllirGenerator.jmmTypeToOllirType(node.get("typeName"));
+        String ollirTypeName = OllirGenerator.jmmTypeToOllirType(node.get("typeName"), symbolTable.getClassName());
         JmmNode sizeExpression = node.getObject("size", JmmNode.class);
 
         ExpressionVisitorInformation sizeInfo = visitExpressionAndStoreInfo(ret, sizeExpression, methodName);
@@ -548,7 +571,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         StringBuilder retName = new StringBuilder("new(");
         ExpressionVisitorInformation ret = new ExpressionVisitorInformation();
 
-        String ollirTypeName = OllirGenerator.jmmTypeToOllirType(node.get("name"));
+        String ollirTypeName = OllirGenerator.jmmTypeToOllirType(node.get("name"), symbolTable.getClassName());
 
         retName.append(ollirTypeName).append(")");
 
@@ -596,14 +619,14 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         switch(symbolInfo.getSymbolPosition()) {
             case LOCAL -> {
                 ret.setResultName(symbolInfo.getSymbol().getName());
-                ret.setOllirType(OllirGenerator.jmmTypeToOllirType(symbolInfo.getSymbol().getType()));
+                ret.setOllirType(OllirGenerator.jmmTypeToOllirType(symbolInfo.getSymbol().getType(), symbolTable.getClassName()));
             }
             case PARAM -> {
                 for (int i = 0; i < method.getArguments().size(); i++) {
                     Symbol param = method.getArguments().get(i);
                     if (param.getName().equals(value)) {
-                        ret.setResultName("$" + i + "." + value);
-                        ret.setOllirType(OllirGenerator.jmmTypeToOllirType(param.getType()));
+                        ret.setResultName("$" + i+1 + "." + value);
+                        ret.setOllirType(OllirGenerator.jmmTypeToOllirType(param.getType(), symbolTable.getClassName()));
                     }
                 }
 
@@ -612,7 +635,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
                 for (Symbol field : symbolTable.getFields()) {
                     if (field.getName().equals(value)) {
                         String varAux = getNewAuxVariable();
-                        String fieldType = OllirGenerator.jmmTypeToOllirType(symbolInfo.getSymbol().getType());
+                        String fieldType = OllirGenerator.jmmTypeToOllirType(symbolInfo.getSymbol().getType(), symbolTable.getClassName());
                         String auxLine = varAux + "." + fieldType + " :=." + fieldType + " getfield(this, " + field.getName() + "." + fieldType + ")." + fieldType + ";";
                         ret.addAuxLine(auxLine);
                         ret.setResultName(varAux);
@@ -629,6 +652,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         ExpressionVisitorInformation ret = new ExpressionVisitorInformation();
         ret.setResultName("this");
         String type = symbolTable.getClassName();
+        ret.setOllirType(type);
         return ret;
     }
 

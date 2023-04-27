@@ -2,6 +2,7 @@ import io;
 import Something.more.ioPlus;
 import other;
 import another.importedClass;
+import madeUp;
 
 class myClass extends importedClass {
     int a;
