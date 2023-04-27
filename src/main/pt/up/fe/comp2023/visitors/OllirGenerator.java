@@ -413,6 +413,13 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         ExpressionVisitorInformation info = exprVisitor.visit(node.getJmmChild(1), methodName);
         this.tempVariables += exprVisitor.getUsedAuxVariables();
 
+        String lastLine = "";
+
+        if (node.getJmmChild(1).getKind().equals("ArrayInstantiation") || node.getJmmChild(1).getKind().equals("Instantiation")) {
+            lastLine = "invokespecial(" + info.getResultNameAndType() +",\"<init>\").V;";
+            info.addAuxLine(lastLine);
+        }
+
         return exprAuxInfoToString(info) + getIdentationString() + "putfield(this, " + fieldName + "." + fieldType + ", " + info.getResultNameAndType() + ").V;\n\n";
     }
 
@@ -446,8 +453,14 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         ExpressionVisitor expressionVisitor = new ExpressionVisitor(this.symbolTable, this.tempVariables);
         ExpressionVisitorInformation assignedExprNodeData = expressionVisitor.visit(assignedExprNode, methodName);
         this.tempVariables += expressionVisitor.getUsedAuxVariables();
+
+        String lastLine = "\n";
+        if (node.getJmmChild(0).getKind().equals("ArrayInstantiation") || node.getJmmChild(0).getKind().equals("Instantiation")) {
+            lastLine = getIdentationString() + "invokespecial(" + varName + "." + assignedExprNodeData.getOllirType() + ",\"<init>\").V;\n\n";
+        }
+
         return exprAuxInfoToString(leftVarData) + exprAuxInfoToString(assignedExprNodeData) + getIdentationString() + varName + "." + assignedExprNodeData.getOllirType()
-                + ":=." + assignedExprNodeData.getOllirType() + " " + assignedExprNodeData.getResultNameAndType() + ";\n\n";
+                + ":=." + assignedExprNodeData.getOllirType() + " " + assignedExprNodeData.getResultNameAndType() + ";\n" + lastLine;
     }
 
     private String dealWithArrayAssignmentStatement(JmmNode node, String methodName) {
@@ -470,9 +483,15 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         ExpressionVisitorInformation assignedExpressionData = assignedExpressionVisitor.visit(assignedExpression, methodName);
         this.tempVariables += assignedExpressionVisitor.getUsedAuxVariables();
 
+        String lastLine = "\n";
+        if (node.getJmmChild(1).getKind().equals("ArrayInstantiation") || node.getJmmChild(1).getKind().equals("Instantiation")) {
+            lastLine = getIdentationString() + "invokespecial(" + varName + "[" + indexExpressionData.getResultNameAndType() + "]." + getArrayOllirType(arrayVarInfo.getSymbol().getType())
+                    + ",\"<init>\").V;\n\n";
+        }
+
         return exprAuxInfoToString(indexExpressionData) + exprAuxInfoToString(assignedExpressionData) + getIdentationString() +
                 varName + "[" + indexExpressionData.getResultNameAndType() + "]." + getArrayOllirType(arrayVarInfo.getSymbol().getType())
-                +  " :=." + assignedExpressionData.getOllirType() + " " + assignedExpressionData.getResultNameAndType() + ";\n\n";
+                +  " :=." + assignedExpressionData.getOllirType() + " " + assignedExpressionData.getResultNameAndType() + ";\n" + lastLine;
     }
 
     /* Probably uneeded

@@ -602,7 +602,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
                 for (int i = 0; i < method.getArguments().size(); i++) {
                     Symbol param = method.getArguments().get(i);
                     if (param.getName().equals(value)) {
-                        ret.setResultName("$" + i + "." + value);
+                        ret.setResultName("$" + i+1 + "." + value);
                         ret.setOllirType(OllirGenerator.jmmTypeToOllirType(param.getType()));
                     }
                 }
