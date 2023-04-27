@@ -248,7 +248,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
             ).toList().isEmpty())) {
                 if (node.getJmmParent().getKind().equals("SimpleStatement")) {
                     StringBuilder line = new StringBuilder();
-                    line.append(OllirGenerator.getIdentationString()).append("invokestatic(")
+                    line.append("invokestatic(")
                             .append(classExprNode.get("value"))
                             .append(", \"")
                             .append(calledMethod)
@@ -323,33 +323,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
                 line.append(", ").append(paramExprInfo.getResultNameAndType());
             }
             line.append(")");
-<<<<<<< HEAD
-            ret.setOllirType("V");
-            ret.setResultName(line.toString());
-            return ret;
-        }
-
-
-        if (node.getJmmParent().getKind().equals("SimpleStatement")) { // No auxiliary variable needed
-            StringBuilder line = new StringBuilder();
-            line.append("invokevirtual(")
-                    .append(classNameInfo.getResultNameAndType())
-                    .append(", \"")
-                    .append(calledMethod)
-                    .append("\"");
-
-            // Probably bad code but it probably works
-            List<JmmNode> parameterExpressions = (node.getChildren().size() > 1) ? node.getChildren().subList(1, node.getNumChildren()) : new ArrayList<>();
-            for (JmmNode childNode : parameterExpressions) {
-                ExpressionVisitorInformation paramExprInfo = visit(childNode, methodName);
-                ret.addAuxLines(paramExprInfo.getAuxLines());
-                line.append(", ").append(paramExprInfo.getResultNameAndType());
-            }
-            line.append(")");
-            ret.setOllirType("V");
-=======
             ret.setOllirType(methodType);
->>>>>>> ollir
             ret.setResultName(line.toString());
             return ret;
         }
