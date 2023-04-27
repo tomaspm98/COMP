@@ -122,7 +122,6 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         }
 
         Method method = optMethod.get();
-
         String methodType = OllirGenerator.jmmTypeToOllirType(method.getRetType(), symbolTable.getClassName());
 
         if (node.getJmmParent().getKind().equals("SimpleStatement")) {
@@ -324,6 +323,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
                 line.append(", ").append(paramExprInfo.getResultNameAndType());
             }
             line.append(")");
+<<<<<<< HEAD
             ret.setOllirType("V");
             ret.setResultName(line.toString());
             return ret;
@@ -347,6 +347,9 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
             }
             line.append(")");
             ret.setOllirType("V");
+=======
+            ret.setOllirType(methodType);
+>>>>>>> ollir
             ret.setResultName(line.toString());
             return ret;
         }
