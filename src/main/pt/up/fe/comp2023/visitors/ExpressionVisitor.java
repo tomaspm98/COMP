@@ -48,7 +48,6 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
 
     private String getImportedMethodReturnType(JmmNode methodCallNode, String outerMethodName) {
         JmmNode parent = methodCallNode.getJmmParent();
-        ;
         Optional<Method> optMethod = this.symbolTable.getMethodTry(outerMethodName);
 
         if (optMethod.isEmpty()) {
@@ -73,7 +72,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
             }
 
             case "Assignment" -> {
-                String varName = parent.getJmmChild(0).get("varName");
+                JmmNode methodNode = parent.getJmmChild(0).getJmmChild(0);
+                String varName = methodNode.get("value");
                 SymbolInfo symbolInfo = symbolTable.getMostSpecificSymbol(outerMethodName, varName);
                 return OllirGenerator.jmmTypeToOllirType(symbolInfo.getSymbol().getType(), symbolTable.getClassName());
             }
