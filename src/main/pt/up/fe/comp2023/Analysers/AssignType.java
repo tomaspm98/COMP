@@ -40,6 +40,8 @@ public class AssignType extends SymbolTableVisitor implements StageResult{
             rightChild = node.getJmmChild(1);
         }
 
+        if (numChildren==0) return null;
+
         //try{
         //        //    leftIdType = getIdType(leftChild).getName();
         //        //}catch(Exception e){
@@ -86,10 +88,18 @@ public class AssignType extends SymbolTableVisitor implements StageResult{
 
         }
 
-        if(!leftIdType.equals(rightIdType)){
-            this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
-                    Integer.valueOf(-1) , Integer.valueOf(-1),
-                    "Assignment with wrong types"));
+        if(!leftIdType.equals(rightIdType)) {
+            if (node.hasAttribute("line")) {
+                this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                        Integer.valueOf(-1), Integer.valueOf(-1),
+                        "Assignment with wrong types"));
+            }
+           /* else {
+                this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                        Integer.valueOf(-1), Integer.valueOf(-1),
+                        "Assignment with wrong types"));
+            }*/
+
         }
 
         return "";

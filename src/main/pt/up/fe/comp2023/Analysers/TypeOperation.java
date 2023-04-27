@@ -31,7 +31,7 @@ public class TypeOperation extends SymbolTableVisitor implements StageResult{
 
         String res = _typeCheck(node);
 
-        if (res.equals("null")) {
+        if ("null".equals(res)) {
             this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
                     Integer.valueOf(node.get("line")), Integer.valueOf(node.get("col")),
                     "Operation with wrong types"));
@@ -42,7 +42,7 @@ public class TypeOperation extends SymbolTableVisitor implements StageResult{
 
     public String getIdType(JmmNode node){
         JmmNode parentNode = node;
-        while (parentNode != null && !parentNode.getKind().equals("methodDeclaration")) {
+        while (parentNode != null && !parentNode.getKind().equals("MethodDeclaration")) {
             parentNode = parentNode.getJmmParent();
         }
 
@@ -104,7 +104,7 @@ public class TypeOperation extends SymbolTableVisitor implements StageResult{
             return getIdType(node);
         }
 
-        if (myKind.equals("methodDeclaration")) {
+        if (myKind.equals("MethodDeclaration")) {
             return "null";
         }
 
@@ -122,6 +122,6 @@ public class TypeOperation extends SymbolTableVisitor implements StageResult{
 
     @Override
     public Map<String, String> getConfig() {
-        return null;
+        return new HashMap<>();
     }
 }

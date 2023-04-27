@@ -15,7 +15,7 @@ public class VarNotDeclared extends SymbolTableVisitor implements StageResult {
     private List<Report> reports;
 
     public VarNotDeclared(SymbolTable symbolTable, JmmNode rootNode) {
-        super(symbolTable);
+        //super(symbolTable);
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();
