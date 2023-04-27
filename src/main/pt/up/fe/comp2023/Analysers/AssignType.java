@@ -40,7 +40,7 @@ public class AssignType extends SymbolTableVisitor implements StageResult{
             rightChild = node.getJmmChild(1);
         }
 
-        if (numChildren==0) return null;
+        //if (numChildren==0) return null;
 
         //try{
         //        //    leftIdType = getIdType(leftChild).getName();
