@@ -38,9 +38,7 @@ public class JmmAnalyser implements JmmAnalysis {
                 new AssignType(symbolTable, parserResult.getRootNode()),
                 new TypeOperation(symbolTable, parserResult.getRootNode()),
                 new ArrayInOperation(symbolTable, parserResult.getRootNode()),
-                new BooleanConditions(symbolTable, parserResult.getRootNode()),
-                new InvalidArrayOperations(symbolTable, parserResult.getRootNode()),
-                new InvalidAssignments(symbolTable, parserResult.getRootNode())
+                new BooleanConditions(symbolTable, parserResult.getRootNode())
         );
 
         for(var analyser : analysers){

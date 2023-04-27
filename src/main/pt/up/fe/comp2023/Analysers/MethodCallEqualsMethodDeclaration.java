@@ -27,7 +27,7 @@ public class MethodCallEqualsMethodDeclaration extends SymbolTableVisitor implem
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         buildVisitor();
-        addVisit("MethodCall", this::callExpressionVisit);
+        addVisit("ExpressionVisit", this::callExpressionVisit);
         visit(rootNode);
     }
 
@@ -81,7 +81,7 @@ public class MethodCallEqualsMethodDeclaration extends SymbolTableVisitor implem
         var currentNode = node;
         var father=node;
 
-        while(!currentNode.getKind().equals("MethodDeclaration") &&
+        while(!currentNode.getKind().equals("methodDeclaration") &&
                 !currentNode.getKind().equals("Program")){
             currentNode = currentNode.getJmmParent();
 

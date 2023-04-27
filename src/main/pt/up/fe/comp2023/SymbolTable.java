@@ -56,7 +56,7 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
     @Override
     public List<Symbol> getFields() {
-        return this.fields.isEmpty() ? new ArrayList<>() : this.fields;
+        return this.fields.isEmpty() ? null : this.fields;
     }
 
     public void setFields(List<Symbol> fields) {

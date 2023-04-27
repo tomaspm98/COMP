@@ -27,7 +27,7 @@ public class ArrayAccessOverArray extends SymbolTableVisitor implements StageRes
         this.reports = new ArrayList<>();
         buildVisitor();
         addVisit("ArrayAccess", this::arrayAccessVisit);
-        addVisit("Array", this::addVisit);
+        //addVisit("Array", this::addVisit);
         visit(root);
     }
 
