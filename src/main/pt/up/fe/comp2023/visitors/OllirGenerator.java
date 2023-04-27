@@ -9,6 +9,7 @@ import pt.up.fe.comp2023.SymbolTable;
 import pt.up.fe.comp2023.node.information.Method;
 import pt.up.fe.comp2023.utils.ExpressionVisitorInformation;
 import pt.up.fe.comp2023.utils.SymbolInfo;
+import pt.up.fe.comp2023.utils.SymbolPosition;
 import pt.up.fe.specs.util.collections.SpecsList;
 
 import javax.swing.text.html.Option;
@@ -155,7 +156,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             ret.append(getIdentationString()).append(auxLine).append("\n");
         }
 
-        ret.append(data.getResultNameAndType());
+        ret.append(OllirGenerator.getIdentationString()).append(data.getResultNameAndType());
         return ret.toString();
     }
 
@@ -383,7 +384,8 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
 
     private String dealWithSimpleStatement(JmmNode node, String methodName) {
         ExpressionVisitor exprVisitor = new ExpressionVisitor(symbolTable, this.tempVariables);
-        ExpressionVisitorInformation info = exprVisitor.visit(node.getJmmChild(0), methodName);
+        JmmNode exprNode = node.getJmmChild(0);
+        ExpressionVisitorInformation info = exprVisitor.visit(exprNode, methodName);
         this.tempVariables += exprVisitor.getUsedAuxVariables();
 
         return exprInfoToString(info) + ";\n\n";
@@ -418,7 +420,16 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
     private String dealWithAssignmentStatement(JmmNode node, String methodName) {
         String varName = node.get("varName");
 
+        Optional<SymbolInfo> symbolInfoOpt = symbolTable.getMostSpecificSymbolTry(methodName, varName);
+
         JmmNode assignedExprNode =  node.getJmmChild(0);
+
+        if (symbolInfoOpt.isPresent() && symbolInfoOpt.get().getSymbolPosition().equals(SymbolPosition.FIELD)) {
+            ExpressionVisitor expressionVisitor = new ExpressionVisitor(this.symbolTable, this.tempVariables);
+            ExpressionVisitorInformation assignedExprNodeData = expressionVisitor.visit(assignedExprNode, methodName);
+            this.tempVariables += expressionVisitor.getUsedAuxVariables();
+            return exprAuxInfoToString(assignedExprNodeData) + getIdentationString() + "putfield(this, " + jmmSymbolToOllirSymbol(symbolInfoOpt.get().getSymbol()) + ", " + assignedExprNodeData.getResultNameAndType() + ").V;\n\n";
+        }
 
         Optional<Method> optMethod = this.symbolTable.getMethodTry(methodName);
 

@@ -79,6 +79,7 @@ condition
 expression
     :
     classNameExp=expression '.' methodName=ID '('  (expression ( ',' expression)*)? ')' #MethodCall // TODO Check if class name exists and has a 'methodName' method - return type is method's return type
+    | 'this' '.' methodName=ID '('  (expression ( ',' expression)*)? ')' #ThisMethodCall
     | array=expression '.' 'length' #ArrayLength // TODO Check if expression is an array - return type is integer
     | array=expression '[' index=expression ']' #ArrayAccess // TODO check if array is an array and if index is an integer - return type is array's type (integer)
     | '(' expression ')' #Parenthesis // TODO return type depends on nested expression

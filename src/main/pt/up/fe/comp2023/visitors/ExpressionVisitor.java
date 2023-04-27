@@ -106,8 +106,73 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         addVisit("Boolean", this::dealWithBool);
         addVisit("Identifier", this::dealWithID);
         addVisit("ClassAccess", this::dealWithClassAccess);
+        addVisit("ThisMethodCall", this::dealWithThisMethodCall);
     }
 
+    private ExpressionVisitorInformation dealWithThisMethodCall(JmmNode node, String methodName) {
+        ExpressionVisitorInformation ret = new ExpressionVisitorInformation();
+
+        String className = "this";
+        String calledMethod = node.get("methodName");
+        Optional<Method> optMethod = this.symbolTable.getMethodTry(calledMethod);
+
+        if (optMethod.isEmpty()) {
+            System.err.println("Tried to access method '" + methodName + "' of this class, but it couldn't be found");
+            return null;
+        }
+
+        Method method = optMethod.get();
+        String methodType = OllirGenerator.jmmTypeToOllirType(method.getRetType());
+
+        if (node.getJmmParent().getKind().equals("SimpleStatement")) {
+            StringBuilder line = new StringBuilder();
+            line.append("invokevirtual(")
+                    .append("this")
+                    .append(", \"")
+                    .append(calledMethod)
+                    .append("\"");
+
+            List<JmmNode> parameterExpressions = (node.getChildren().size() > 1) ? node.getChildren().subList(1, node.getNumChildren()) : new ArrayList<>();
+            for (JmmNode childNode : parameterExpressions) {
+                ExpressionVisitorInformation paramExprInfo = visit(childNode, methodName);
+                ret.addAuxLines(paramExprInfo.getAuxLines());
+                line.append(", ").append(paramExprInfo.getResultNameAndType());
+            }
+
+            line.append(")");
+            ret.setResultName(line.toString());
+            ret.setOllirType(methodType);
+        }
+
+        StringBuilder lastAuxLine = new StringBuilder();
+
+
+        String lastAuxVar = getNewAuxVariable();
+
+        lastAuxLine.append(lastAuxVar).append(".").append(methodType)
+                .append(" :=.").append(methodType);
+        lastAuxLine.append(" invokevirtual(")
+                .append("this")
+                .append(", \"")
+                .append(calledMethod)
+                .append("\"");
+
+        // Probably bad code but it probably works
+        List<JmmNode> parameterExpressions = (node.getChildren().size() > 1) ? node.getChildren().subList(1, node.getNumChildren()) : new ArrayList<>();
+        for (JmmNode childNode : parameterExpressions) {
+            ExpressionVisitorInformation paramExprInfo = visit(childNode, methodName);
+            ret.addAuxLines(paramExprInfo.getAuxLines());
+            lastAuxLine.append(", ").append(paramExprInfo.getResultNameAndType());
+        }
+        lastAuxLine.append(").").append(methodType).append(";");
+
+        ret.addAuxLine(lastAuxLine.toString());
+        ret.setOllirType(methodType);
+        ret.setResultName(lastAuxVar);
+        return ret;
+
+
+    }
     private ExpressionVisitorInformation dealWithMethodCall(JmmNode node, String methodName) {
         StringBuilder lastAuxLine = new StringBuilder();
         ExpressionVisitorInformation ret = new ExpressionVisitorInformation();
@@ -169,7 +234,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
                     ret.addAuxLines(paramExprInfo.getAuxLines());
                     lastAuxLine.append(", ").append(paramExprInfo.getResultNameAndType());
                 }
-                lastAuxLine.append(").").append(methodType);
+                lastAuxLine.append(").").append(methodType).append(";");
 
                 ret.addAuxLine(lastAuxLine.toString());
                 ret.setOllirType(methodType);
@@ -220,7 +285,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
                     ret.addAuxLines(paramExprInfo.getAuxLines());
                     lastAuxLine.append(", ").append(paramExprInfo.getResultNameAndType());
                 }
-                lastAuxLine.append(").").append(methodType);
+                lastAuxLine.append(").").append(methodType).append(";");
 
                 ret.addAuxLine(lastAuxLine.toString());
                 ret.setOllirType(methodType);
@@ -242,6 +307,28 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         String lastAuxVar = getNewAuxVariable();
         String methodType = OllirGenerator.jmmTypeToOllirType(method.getRetType());
 
+        if (node.getJmmParent().getKind().equals("SimpleStatement")) { // No auxiliary variable needed
+            StringBuilder line = new StringBuilder();
+            line.append("invokevirtual(")
+                    .append(classNameInfo.getResultNameAndType())
+                    .append(", \"")
+                    .append(calledMethod)
+                    .append("\"");
+
+            // Probably bad code but it probably works
+            List<JmmNode> parameterExpressions = (node.getChildren().size() > 1) ? node.getChildren().subList(1, node.getNumChildren()) : new ArrayList<>();
+            for (JmmNode childNode : parameterExpressions) {
+                ExpressionVisitorInformation paramExprInfo = visit(childNode, methodName);
+                ret.addAuxLines(paramExprInfo.getAuxLines());
+                line.append(", ").append(paramExprInfo.getResultNameAndType());
+            }
+            line.append(")");
+            ret.setOllirType("V");
+            ret.setResultName(line.toString());
+            return ret;
+        }
+
+
         lastAuxLine.append(lastAuxVar).append(".").append(methodType)
                 .append(" :=.").append(methodType);
         lastAuxLine.append(" invokevirtual(")
@@ -257,7 +344,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
             ret.addAuxLines(paramExprInfo.getAuxLines());
             lastAuxLine.append(", ").append(paramExprInfo.getResultNameAndType());
         }
-        lastAuxLine.append(").").append(methodType);
+        lastAuxLine.append(").").append(methodType).append(";");
 
         ret.addAuxLine(lastAuxLine.toString());
         ret.setOllirType(methodType);
