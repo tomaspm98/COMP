@@ -197,7 +197,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
             ) {
                 if (node.getJmmParent().getKind().equals("SimpleStatement")) {
                     StringBuilder line = new StringBuilder();
-                    line.append(OllirGenerator.getIdentationString()).append("invokestatic(")
+                    line.append("invokestatic(")
                             .append(OllirGenerator.jmmTypeToOllirType(symbolInfo.get().getSymbol().getType()))
                             .append(", \"")
                             .append(calledMethod)
@@ -248,7 +248,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
             ).toList().isEmpty())) {
                 if (node.getJmmParent().getKind().equals("SimpleStatement")) {
                     StringBuilder line = new StringBuilder();
-                    line.append(OllirGenerator.getIdentationString()).append("invokestatic(")
+                    line.append("invokestatic(")
                             .append(classExprNode.get("value"))
                             .append(", \"")
                             .append(calledMethod)
