@@ -30,7 +30,7 @@ public class JmmAnalyser implements JmmAnalysis {
        // System.out.println("==================================");
 
         reports.addAll(symbolTableFiller.getReports());
-
+/*
         List<SymbolTableVisitor> analysers = Arrays.asList(
                 new ArrayAccessOverArray(symbolTable, parserResult.getRootNode()),
                 new VarNotDeclared(symbolTable, parserResult.getRootNode()),
@@ -46,7 +46,7 @@ public class JmmAnalyser implements JmmAnalysis {
         for(var analyser : analysers){
             reports.addAll(analyser.getReports());
         }
-
+*/
         //reports.addAll(symbolTableFiller.getReports());
 
         return new JmmSemanticsResult(parserResult, symbolTable, reports);

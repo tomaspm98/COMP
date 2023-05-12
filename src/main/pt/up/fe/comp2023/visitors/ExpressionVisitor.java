@@ -1,6 +1,5 @@
 package pt.up.fe.comp2023.visitors;
 
-import org.specs.comp.ollir.Ollir;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
@@ -19,12 +18,6 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
     private Integer currentAuxVariable;
     private Integer usedAuxVariables;
 
-    public ExpressionVisitor(SymbolTable symbolTable) {
-        this.symbolTable = symbolTable;
-        this.currentAuxVariable = 0;
-        this.usedAuxVariables = 0;
-    }
-
     public ExpressionVisitor(SymbolTable symbolTable, Integer startingAuxVariable) {
         this.symbolTable = symbolTable;
         this.currentAuxVariable = startingAuxVariable;
@@ -40,7 +33,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         return ret;
     }
 
-    private ExpressionVisitorInformation visitExpressionAndStoreInfo(ExpressionVisitorInformation storage, JmmNode toVisit, String methodName) {
+    private ExpressionVisitorInformation visitExpressionAndStoreInfo(ExpressionVisitorInformation storage,
+                                                                     JmmNode toVisit, String methodName) {
         ExpressionVisitorInformation exprNodeInfo = visit(toVisit, methodName);
         storage.addAuxLines(exprNodeInfo.getAuxLines());
         return exprNodeInfo;
@@ -55,9 +49,6 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
             return "MIDERROR";
         }
 
-        Method outerMethod = optMethod.get();
-
-
         switch (parent.getKind()) {
             case "SimpleStatement" -> {
                 return "V";
@@ -66,7 +57,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
             case "ClassFieldAssignment" -> {
                 String fieldName = parent.getJmmChild(0).get("varName");
                 for (var field : symbolTable.getFields()) {
-                    if (field.getName().equals(fieldName)) return OllirGenerator.jmmTypeToOllirType(field.getType(), symbolTable.getClassName());
+                    if (field.getName().equals(fieldName))
+                        return OllirGenerator.jmmTypeToOllirType(field.getType(), symbolTable.getClassName());
                 }
                 return "BIGERROR";
             }
@@ -90,10 +82,58 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         }
     }
 
+    /**
+     * Given an Expression#MethodCall or Expression#ThisMethodCall, gets its children parameter nodes
+     * and appends their name and type to line, comma separated. Starts off with a comma if at least one element is to
+     * be appended.
+     *
+     * @param node       The JmmNode that has the parameter children. Should be an
+     *                   Expression#MethodCall or Expression#ThisMethodCall
+     * @param parentMethodName The method in which this node is in
+     * @param ret        The callee's return variable, should be of type ExpressionVisitorInformation
+     * @param line       The StringBuilder line to which the parameters will be appended to
+     */
+    private void getAndAppendParamsCommaSep(JmmNode node, String parentMethodName, ExpressionVisitorInformation ret,
+                                            StringBuilder line) {
+        int startingIndex = node.getKind().equals("MethodCall") ? 1 : 0;
+
+        List<JmmNode> parameterExpressions =
+                (node.getChildren().size() > startingIndex) ?
+                        node.getChildren().subList(1, node.getNumChildren())
+                        :
+                        new ArrayList<>();
+
+        for (JmmNode childNode : parameterExpressions) {
+            ExpressionVisitorInformation paramExprInfo = visit(childNode, parentMethodName);
+            ret.addAuxLines(paramExprInfo.getAuxLines());
+            line.append(", ").append(paramExprInfo.getResultNameAndType());
+        }
+    }
+
+    private boolean isDeclaredClassInstance(ExpressionVisitorInformation calledMethodsObj, String parentMethodName) {
+        Optional<SymbolInfo> symbolInfoOpt = symbolTable.getMostSpecificSymbolTry(parentMethodName, calledMethodsObj.getResultName());
+
+        if (symbolInfoOpt.isEmpty()) {
+            return false;
+        }
+
+        SymbolInfo symbolInfo = symbolInfoOpt.get();
+        return symbolInfo.getSymbol().getType().getName().equals(symbolTable.getClassName());
+    }
+
+    private boolean isImportedClass(ExpressionVisitorInformation calledMethodsObj) {
+        return symbolTable.getImportedClasses().contains(calledMethodsObj.getResultName());
+    }
+
+    private boolean parentNodeIsSimpleStatement(JmmNode currentNode) {
+        return currentNode.getJmmParent().getKind().equals("SimpleStatement");
+    }
+
     // End Utility methods
     @Override
     protected void buildVisitor() {
-        addVisit("MethodCall", this::dealWithMethodCall);
+        addVisit("MethodCall", this::dealWithGenericMethodCall);
+        addVisit("ThisMethodCall", this::dealWithThisMethodCall);
         addVisit("ArrayLength", this::dealWithArrayLength);
         addVisit("ArrayAccess", this::dealWithArrayAccess);
         addVisit("Parenthesis", this::dealWithParenthesis);
@@ -106,250 +146,214 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         addVisit("Boolean", this::dealWithBool);
         addVisit("Identifier", this::dealWithID);
         addVisit("ClassAccess", this::dealWithClassAccess);
-        addVisit("ThisMethodCall", this::dealWithThisMethodCall);
     }
 
-    private ExpressionVisitorInformation dealWithThisMethodCall(JmmNode node, String methodName) {
-        ExpressionVisitorInformation ret = new ExpressionVisitorInformation();
+    private void dealWithDeclaredClassStaticMethodCall(JmmNode methodCallNode,
+                                                       ExpressionVisitorInformation calledMethodsObj,
+                                                       ExpressionVisitorInformation parentRet,
+                                                       String parentMethodName) {
 
-        String className = "this";
-        String calledMethod = node.get("methodName");
-        Optional<Method> optMethod = this.symbolTable.getMethodTry(calledMethod);
+        String calledMethodName = methodCallNode.get("methodName");
+        // Errors in this phase are NOT handled, should have been caught by semantic analysis
+        Method calledMethod = symbolTable.getMethodOrWarn(calledMethodName, "dealWithThisMethodCall");
+        String methodType = OllirGenerator.jmmTypeToOllirType(calledMethod.getRetType(), symbolTable.getClassName());
 
-        if (optMethod.isEmpty()) {
-            System.err.println("Tried to access method '" + methodName + "' of this class, but it couldn't be found");
-            return null;
+        if (methodType.equals("V") || parentNodeIsSimpleStatement(methodCallNode)) {
+            StringBuilder returnLine = new StringBuilder();
+
+            returnLine.append("invokestatic(this").append(", \"").append(calledMethod).append("\"");
+
+            getAndAppendParamsCommaSep(methodCallNode, parentMethodName, parentRet, returnLine);
+            returnLine.append(")");
+
+            parentRet.setResultName(returnLine.toString());
+            parentRet.setOllirType(methodType);
+            return;
         }
 
-        Method method = optMethod.get();
-        String methodType = OllirGenerator.jmmTypeToOllirType(method.getRetType(), symbolTable.getClassName());
 
-        if (node.getJmmParent().getKind().equals("SimpleStatement")) {
-            StringBuilder line = new StringBuilder();
-            line.append("invokevirtual(")
-                    .append("this")
-                    .append(", \"")
-                    .append(calledMethod)
-                    .append("\"");
+        String methodCallHolderName = getNewAuxVariable();
+        StringBuilder storeCallValueLine = new StringBuilder();
+        storeCallValueLine.append(methodCallHolderName).append(".").append(methodType)
+                .append(" :=.").append(methodType)
+                .append(" invokestatic(this").append(", \"").append(calledMethod).append("\"");
 
-            List<JmmNode> parameterExpressions = (node.getChildren().size() > 1) ? node.getChildren().subList(1, node.getNumChildren()) : new ArrayList<>();
-            for (JmmNode childNode : parameterExpressions) {
-                ExpressionVisitorInformation paramExprInfo = visit(childNode, methodName);
-                ret.addAuxLines(paramExprInfo.getAuxLines());
-                line.append(", ").append(paramExprInfo.getResultNameAndType());
-            }
+        getAndAppendParamsCommaSep(methodCallNode, parentMethodName, parentRet, storeCallValueLine);
+        storeCallValueLine.append(").").append(methodType).append(";");
 
-            line.append(")");
-            ret.setResultName(line.toString());
-            ret.setOllirType(methodType);
-        }
+        parentRet.addAuxLine(storeCallValueLine.toString());
 
-        StringBuilder lastAuxLine = new StringBuilder();
-
-
-        String lastAuxVar = getNewAuxVariable();
-
-        lastAuxLine.append(lastAuxVar).append(".").append(methodType)
-                .append(" :=.").append(methodType);
-        lastAuxLine.append(" invokevirtual(")
-                .append("this")
-                .append(", \"")
-                .append(calledMethod)
-                .append("\"");
-
-        // Probably bad code but it probably works
-        List<JmmNode> parameterExpressions = (node.getChildren().size() > 1) ? node.getChildren().subList(1, node.getNumChildren()) : new ArrayList<>();
-        for (JmmNode childNode : parameterExpressions) {
-            ExpressionVisitorInformation paramExprInfo = visit(childNode, methodName);
-            ret.addAuxLines(paramExprInfo.getAuxLines());
-            lastAuxLine.append(", ").append(paramExprInfo.getResultNameAndType());
-        }
-        lastAuxLine.append(").").append(methodType).append(";");
-
-        ret.addAuxLine(lastAuxLine.toString());
-        ret.setOllirType(methodType);
-        ret.setResultName(lastAuxVar);
-        return ret;
-
-
+        parentRet.setResultName(methodCallHolderName);
+        parentRet.setOllirType(methodType);
     }
-    private ExpressionVisitorInformation dealWithMethodCall(JmmNode node, String methodName) {
-        StringBuilder lastAuxLine = new StringBuilder();
-        ExpressionVisitorInformation ret = new ExpressionVisitorInformation();
 
-        String calledMethod = node.get("methodName");
-        Optional<Method> optMethod = this.symbolTable.getMethodTry(calledMethod);
+    // Will use invokevirtual(name.retType, "funcName");
+    private void dealWithDeclaredClassInstanceMethodCall(JmmNode methodCallNode,
+                                                         ExpressionVisitorInformation calledMethodsObj,
+                                                         ExpressionVisitorInformation parentRet,
+                                                         String parentMethodName) {
 
+        String calledMethodName = methodCallNode.get("methodName");
+        // Errors in this phase are NOT handled, should have been caught by semantic analysis
+        Method calledMethod = symbolTable.getMethodOrWarn(calledMethodName, "dealWithThisMethodCall");
+        String methodType = OllirGenerator.jmmTypeToOllirType(calledMethod.getRetType(), symbolTable.getClassName());
 
-        if (optMethod.isEmpty()) {
+        if (methodType.equals("V") || parentNodeIsSimpleStatement(methodCallNode)) {
+            StringBuilder returnLine = new StringBuilder();
 
-            // I take back my previous comment, THIS is the worst code I've ever seen / written
-            // avert thine eyes, lest thee seeketh the truth
-            // TODO High priority refactor
-            JmmNode classExprNode = node.getJmmChild(0);
-            Optional<SymbolInfo> symbolInfo = symbolTable.getMostSpecificSymbolTry(methodName, classExprNode.get("value"));
+            returnLine.append("invokevirtual(").append(calledMethodsObj.getResultNameAndType()).append(", \"").append(calledMethodName).append("\"");
 
-            //call to a non static method of a variable of imported/unknown type
-            if (classExprNode.getKind().equals("Identifier") && symbolInfo.isPresent() &&
-                    !(symbolTable.getImportedClasses().stream().filter(
-                            s -> s.equals(symbolInfo.get().getSymbol().getType().getName())
-                    ).toList().isEmpty())
-            ) {
-                if (node.getJmmParent().getKind().equals("SimpleStatement")) {
-                    StringBuilder line = new StringBuilder();
-                    line.append("invokestatic(")
-                            .append(OllirGenerator.jmmTypeToOllirType(symbolInfo.get().getSymbol().getType(), symbolTable.getClassName()))
-                            .append(", \"")
-                            .append(calledMethod)
-                            .append("\"");
+            getAndAppendParamsCommaSep(methodCallNode, parentMethodName, parentRet, returnLine);
+            returnLine.append(")");
 
-                    // Probably bad code but it probably works
-                    List<JmmNode> parameterExpressions = (node.getChildren().size() > 1) ? node.getChildren().subList(1, node.getNumChildren()) : new ArrayList<>();
-                    for (JmmNode childNode : parameterExpressions) {
-                        ExpressionVisitorInformation paramExprInfo = visit(childNode, methodName);
-                        ret.addAuxLines(paramExprInfo.getAuxLines());
-                        line.append(", ").append(paramExprInfo.getResultNameAndType());
-                    }
-                    line.append(")");
-
-                    ret.setOllirType("V");
-                    ret.setResultName(line.toString());
-                    return ret;
-                }
-                String lastAuxVar = getNewAuxVariable();
-                String methodType = getImportedMethodReturnType(node, methodName);
-
-                lastAuxLine.append(lastAuxVar).append(".").append(methodType)
-                        .append(" :=.").append(methodType);
-                lastAuxLine.append(" invokestatic(")
-                        .append(classExprNode.get("value"))
-                        .append(", \"")
-                        .append(calledMethod)
-                        .append("\"");
-
-                // Probably bad code but it probably works
-                List<JmmNode> parameterExpressions = (node.getChildren().size() > 1) ? node.getChildren().subList(1, node.getNumChildren()) : new ArrayList<>();
-                for (JmmNode childNode : parameterExpressions) {
-                    ExpressionVisitorInformation paramExprInfo = visit(childNode, methodName);
-                    ret.addAuxLines(paramExprInfo.getAuxLines());
-                    lastAuxLine.append(", ").append(paramExprInfo.getResultNameAndType());
-                }
-                lastAuxLine.append(").").append(methodType).append(";");
-
-                ret.addAuxLine(lastAuxLine.toString());
-                ret.setOllirType(methodType);
-                ret.setResultName(lastAuxVar);
-                return ret;
-            }
-
-            // call to a static method of an imported class
-            else if (classExprNode.getKind().equals("Identifier") && !(symbolTable.getImportedClasses().stream().filter(
-                    s -> s.equals(classExprNode.get("value"))
-            ).toList().isEmpty())) {
-                if (node.getJmmParent().getKind().equals("SimpleStatement")) {
-                    StringBuilder line = new StringBuilder();
-                    line.append("invokestatic(")
-                            .append(classExprNode.get("value"))
-                            .append(", \"")
-                            .append(calledMethod)
-                            .append("\"");
-
-                    // Probably bad code but it probably works
-                    List<JmmNode> parameterExpressions = (node.getChildren().size() > 1) ? node.getChildren().subList(1, node.getNumChildren()) : new ArrayList<>();
-                    for (JmmNode childNode : parameterExpressions) {
-                        ExpressionVisitorInformation paramExprInfo = visit(childNode, methodName);
-                        ret.addAuxLines(paramExprInfo.getAuxLines());
-                        line.append(", ").append(paramExprInfo.getResultNameAndType());
-                    }
-                    line.append(")");
-
-                    ret.setOllirType("V");
-                    ret.setResultName(line.toString());
-                    return ret;
-                }
-                String lastAuxVar = getNewAuxVariable();
-                String methodType = getImportedMethodReturnType(node, methodName);
-
-                lastAuxLine.append(lastAuxVar).append(".").append(methodType)
-                        .append(" :=.").append(methodType);
-                lastAuxLine.append(" invokestatic(")
-                        .append(classExprNode.get("value"))
-                        .append(", \"")
-                        .append(calledMethod)
-                        .append("\"");
-
-                // Probably bad code but it probably works
-                List<JmmNode> parameterExpressions = (node.getChildren().size() > 1) ? node.getChildren().subList(1, node.getNumChildren()) : new ArrayList<>();
-                for (JmmNode childNode : parameterExpressions) {
-                    ExpressionVisitorInformation paramExprInfo = visit(childNode, methodName);
-                    ret.addAuxLines(paramExprInfo.getAuxLines());
-                    lastAuxLine.append(", ").append(paramExprInfo.getResultNameAndType());
-                }
-                lastAuxLine.append(").").append(methodType).append(";");
-
-                ret.addAuxLine(lastAuxLine.toString());
-                ret.setOllirType(methodType);
-                ret.setResultName(lastAuxVar);
-                return ret;
-            }
-
-
-            //TODO maybe add report
-            System.err.println("Tried to search for method '" + calledMethod + "' but it wasn't found.");
-            return ret;
+            parentRet.setResultName(returnLine.toString());
+            parentRet.setOllirType(methodType);
+            return;
         }
 
-        Method method = optMethod.get();
+        String methodCallHolderName = getNewAuxVariable();
+        StringBuilder storeCallValueLine = new StringBuilder();
+        storeCallValueLine.append(methodCallHolderName).append(".").append(methodType)
+                .append(" :=.").append(methodType)
+                .append(" invokevirtual(").append(calledMethodsObj.getResultNameAndType()).append(", \"").append(calledMethodName).append("\"");
 
-        ExpressionVisitorInformation classNameInfo = visit(node.getJmmChild(0), methodName);
-        ret.addAuxLines(classNameInfo.getAuxLines());
+        getAndAppendParamsCommaSep(methodCallNode, parentMethodName, parentRet, storeCallValueLine);
+        storeCallValueLine.append(").").append(methodType).append(";");
 
-        String lastAuxVar = getNewAuxVariable();
-        String methodType = OllirGenerator.jmmTypeToOllirType(method.getRetType(), symbolTable.getClassName());
+        parentRet.addAuxLine(storeCallValueLine.toString());
 
-        if (node.getJmmParent().getKind().equals("SimpleStatement")) { // No auxiliary variable needed
-            StringBuilder line = new StringBuilder();
-            line.append("invokevirtual(")
-                    .append(classNameInfo.getResultNameAndType())
-                    .append(", \"")
-                    .append(calledMethod)
-                    .append("\"");
+        parentRet.setResultName(methodCallHolderName);
+        parentRet.setOllirType(methodType);
+    }
 
-            // Probably bad code but it probably works
-            List<JmmNode> parameterExpressions = (node.getChildren().size() > 1) ? node.getChildren().subList(1, node.getNumChildren()) : new ArrayList<>();
-            for (JmmNode childNode : parameterExpressions) {
-                ExpressionVisitorInformation paramExprInfo = visit(childNode, methodName);
-                ret.addAuxLines(paramExprInfo.getAuxLines());
-                line.append(", ").append(paramExprInfo.getResultNameAndType());
-            }
-            line.append(")");
-            ret.setOllirType(methodType);
-            ret.setResultName(line.toString());
-            return ret;
+    private void dealWithImportedClassInstanceMethodCall(JmmNode methodCallNode,
+                                                         ExpressionVisitorInformation calledMethodsObj,
+                                                         ExpressionVisitorInformation parentRet,
+                                                         String parentMethodName) {
+
+        String calledMethodName = methodCallNode.get("methodName");
+
+        String methodType = getImportedMethodReturnType(methodCallNode, parentMethodName);
+
+        if (methodType.equals("V") || parentNodeIsSimpleStatement(methodCallNode)) {
+            StringBuilder returnLine = new StringBuilder();
+
+            returnLine.append("invokevirtual(").append(calledMethodsObj.getResultNameAndType()).append(", \"").append(calledMethodName).append("\"");
+
+            getAndAppendParamsCommaSep(methodCallNode, parentMethodName, parentRet, returnLine);
+            returnLine.append(")");
+
+            parentRet.setResultName(returnLine.toString());
+            parentRet.setOllirType(methodType);
+            return;
         }
 
+        String methodCallHolderName = getNewAuxVariable();
+        StringBuilder storeCallValueLine = new StringBuilder();
+        storeCallValueLine.append(methodCallHolderName).append(".").append(methodType)
+                .append(" :=.").append(methodType)
+                .append(" invokevirtual(").append(calledMethodsObj.getResultNameAndType()).append(", \"").append(calledMethodName).append("\"");
 
-        lastAuxLine.append(lastAuxVar).append(".").append(methodType)
-                .append(" :=.").append(methodType);
-        lastAuxLine.append(" invokevirtual(")
-                .append(classNameInfo.getResultNameAndType())
-                .append(", \"")
-                .append(calledMethod)
-                .append("\"");
+        getAndAppendParamsCommaSep(methodCallNode, parentMethodName, parentRet, storeCallValueLine);
+        storeCallValueLine.append(").").append(methodType).append(";");
 
-        // Probably bad code but it probably works
-        List<JmmNode> parameterExpressions = (node.getChildren().size() > 1) ? node.getChildren().subList(1, node.getNumChildren()) : new ArrayList<>();
-        for (JmmNode childNode : parameterExpressions) {
-            ExpressionVisitorInformation paramExprInfo = visit(childNode, methodName);
-            ret.addAuxLines(paramExprInfo.getAuxLines());
-            lastAuxLine.append(", ").append(paramExprInfo.getResultNameAndType());
+        parentRet.addAuxLine(storeCallValueLine.toString());
+
+        parentRet.setResultName(methodCallHolderName);
+        parentRet.setOllirType(methodType);
+    }
+
+
+    private void dealWithImportedClassStaticMethodCall(JmmNode methodCallNode,
+                                                       ExpressionVisitorInformation calledMethodsObj,
+                                                       ExpressionVisitorInformation parentRet,
+                                                       String parentMethodName) {
+        String calledMethodName = methodCallNode.get("methodName");
+
+        String methodType = getImportedMethodReturnType(methodCallNode, parentMethodName);
+
+        if (methodType.equals("V") || parentNodeIsSimpleStatement(methodCallNode)) {
+            StringBuilder returnLine = new StringBuilder();
+
+            returnLine.append("invokestatic(").append(calledMethodsObj.getResultName()).append(", \"").append(calledMethodName).append("\"");
+
+            getAndAppendParamsCommaSep(methodCallNode, parentMethodName, parentRet, returnLine);
+            returnLine.append(")");
+
+            parentRet.setResultName(returnLine.toString());
+            parentRet.setOllirType(methodType);
+            return;
         }
-        lastAuxLine.append(").").append(methodType).append(";");
 
-        ret.addAuxLine(lastAuxLine.toString());
-        ret.setOllirType(methodType);
-        ret.setResultName(lastAuxVar);
-        return ret;
+        String methodCallHolderName = getNewAuxVariable();
+        StringBuilder storeCallValueLine = new StringBuilder();
+        storeCallValueLine.append(methodCallHolderName).append(".").append(methodType)
+                .append(" :=.").append(methodType)
+                .append(" invokestatic(").append(calledMethodsObj.getResultName()).append(", \"").append(calledMethodName).append("\"");
+
+        getAndAppendParamsCommaSep(methodCallNode, parentMethodName, parentRet, storeCallValueLine);
+        storeCallValueLine.append(").").append(methodType).append(";");
+
+        parentRet.addAuxLine(storeCallValueLine.toString());
+
+        parentRet.setResultName(methodCallHolderName);
+        parentRet.setOllirType(methodType);
+    }
+
+    private ExpressionVisitorInformation dealWithGenericMethodCall(JmmNode methodCallNode, String parentMethodName) {
+        ExpressionVisitorInformation evInfoRet = new ExpressionVisitorInformation();
+
+        JmmNode calledMethodsObjNode = methodCallNode.getJmmChild(0);
+        ExpressionVisitorInformation calledMethodsObj = visitExpressionAndStoreInfo(evInfoRet, calledMethodsObjNode, parentMethodName);
+
+        if (calledMethodsObj.getResultName().equals(symbolTable.getClassName())) {
+            dealWithDeclaredClassStaticMethodCall(methodCallNode, calledMethodsObj, evInfoRet, parentMethodName);
+        }
+        else if (isDeclaredClassInstance(calledMethodsObj, parentMethodName)) {
+            dealWithDeclaredClassInstanceMethodCall(methodCallNode, calledMethodsObj, evInfoRet, parentMethodName);
+        }
+        else if (isImportedClass(calledMethodsObj)) {
+            dealWithImportedClassStaticMethodCall(methodCallNode, calledMethodsObj, evInfoRet, parentMethodName);
+        }
+        else if (symbolTable.symbolIsDeclared(parentMethodName, calledMethodsObj.getResultName())) {
+            dealWithImportedClassInstanceMethodCall(methodCallNode, calledMethodsObj, evInfoRet, parentMethodName);
+        }
+        else {
+            System.err.println("dealWithGenericMethodCall could not determine which kind of method call this is.");
+        }
+
+        return evInfoRet;
+    }
+
+    private ExpressionVisitorInformation dealWithThisMethodCall(JmmNode methodCallNode, String parentMethodName) {
+        ExpressionVisitorInformation retInfo = new ExpressionVisitorInformation();
+        String calledMethodName = methodCallNode.get("methodName");
+
+        // Errors in this phase are NOT handled, should have been caught by semantic analysis
+        Method calledMethod = symbolTable.getMethodOrWarn(calledMethodName, "dealWithThisMethodCall");
+        String methodType = OllirGenerator.jmmTypeToOllirType(calledMethod.getRetType(), symbolTable.getClassName());
+
+
+        String methodCallHolderName = getNewAuxVariable();
+        StringBuilder storeCallValueLine = new StringBuilder();
+        storeCallValueLine.append(methodCallHolderName).append(".").append(methodType)
+                .append(" :=.").append(methodType)
+                .append(" invokevirtual(").append("this").append(", \"").append(calledMethod).append("\"");
+
+        getAndAppendParamsCommaSep(methodCallNode, parentMethodName, retInfo, storeCallValueLine);
+        storeCallValueLine.append(").").append(methodType).append(";");
+
+        retInfo.addAuxLine(storeCallValueLine.toString());
+        retInfo.setResultName(methodCallHolderName);
+
+        retInfo.setOllirType(methodType);
+
+        return retInfo;
+    }
+
+    private Boolean isNonStaticMethod() {
+
+        return true;
     }
 
     /*
@@ -428,7 +432,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         return visit(innerExprNode, methodName);
     }
 
-    private ExpressionVisitorInformation dealWithUnaryBoolOp(JmmNode node, String methodName) { //TODO maybe this is not it chief
+    private ExpressionVisitorInformation dealWithUnaryBoolOp(JmmNode node, String methodName) {
         StringBuilder retName = new StringBuilder("!.bool ");
         ExpressionVisitorInformation ret = new ExpressionVisitorInformation(false);
         JmmNode expressionNode = node.getObject("bool", JmmNode.class);
@@ -460,26 +464,6 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         ret.setOllirType(type);
 
         return ret;
-
-
-        //TODO in case we don't need to create an aux variable... might be useful in the future
-        /*
-        ExpressionVisitorInformation ret = new ExpressionVisitorInformation(false);
-
-        String opAndType = node.get(" op") + ".i32 ";
-
-        JmmNode arg1Node = node.getObject("arg1", JmmNode.class);
-        JmmNode arg2Node = node.getObject("arg2", JmmNode.class);
-
-        ExpressionVisitorInformation arg1Info = visitExpressionAndStoreInfo(ret, arg1Node, methodName);
-        ExpressionVisitorInformation arg2Info = visitExpressionAndStoreInfo(ret, arg2Node, methodName);
-
-        retName.append(arg1Info.getResultNameAndType()).append(opAndType).append(arg2Info.getResultNameAndType());
-        ret.setResultName(retName.toString());
-        ret.setOllirType("i32");
-        return ret;
-        */
-
     }
 
     private ExpressionVisitorInformation dealWithBoolBinaryOp(JmmNode node, String methodName) {
@@ -501,26 +485,6 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         ret.setOllirType(type);
 
         return ret;
-
-
-        //TODO in case we don't need to create an aux variable... might be useful in the future
-        /*
-        StringBuilder retName = new StringBuilder();
-        ExpressionVisitorInformation ret = new ExpressionVisitorInformation(false);
-
-        String opAndType = node.get(" op") + ".bool ";
-
-        JmmNode arg1Node = node.getObject("arg1", JmmNode.class);
-        JmmNode arg2Node = node.getObject("arg2", JmmNode.class);
-
-        ExpressionVisitorInformation arg1Info = visitExpressionAndStoreInfo(ret, arg1Node, methodName);
-        ExpressionVisitorInformation arg2Info = visitExpressionAndStoreInfo(ret, arg2Node, methodName);
-
-        retName.append(arg1Info.getResultNameAndType()).append(opAndType).append(arg2Info.getResultNameAndType());
-        ret.setResultName(retName.toString());
-        ret.setOllirType("bool");
-        return ret;
-        */
     }
 
     /*
@@ -583,7 +547,6 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         Optional<Method> optMethod = this.symbolTable.getMethodTry(methodName);
 
         if (optMethod.isEmpty()) {
-            //TODO maybe add report
             System.err.println("Tried to search for method '" + methodName + "' but it wasn't found.");
             return ret;
         }
@@ -591,9 +554,17 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         Method method = optMethod.get();
 
 
-        SymbolInfo symbolInfo = this.symbolTable.getMostSpecificSymbol(methodName, value);
+        Optional<SymbolInfo> symbolInfoOpt = this.symbolTable.getMostSpecificSymbolTry(methodName, value);
 
-        switch(symbolInfo.getSymbolPosition()) {
+        if (symbolInfoOpt.isEmpty()) {
+            ret.setResultName(value);
+            ret.setOllirType(value);
+            return ret;
+        }
+
+        SymbolInfo symbolInfo = symbolInfoOpt.get();
+
+        switch (symbolInfo.getSymbolPosition()) {
             case LOCAL -> {
                 ret.setResultName(symbolInfo.getSymbol().getName());
                 ret.setOllirType(OllirGenerator.jmmTypeToOllirType(symbolInfo.getSymbol().getType(), symbolTable.getClassName()));
@@ -602,7 +573,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
                 for (int i = 0; i < method.getArguments().size(); i++) {
                     Symbol param = method.getArguments().get(i);
                     if (param.getName().equals(value)) {
-                        ret.setResultName("$" + i+1 + "." + value);
+                        ret.setResultName("$" + (i + 1) + "." + value);
                         ret.setOllirType(OllirGenerator.jmmTypeToOllirType(param.getType(), symbolTable.getClassName()));
                     }
                 }

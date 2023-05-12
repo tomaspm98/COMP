@@ -7,6 +7,7 @@ import pt.up.fe.comp2023.utils.SymbolInfo;
 import pt.up.fe.comp2023.utils.SymbolPosition;
 import pt.up.fe.specs.util.collections.*;
 
+import javax.swing.text.html.Option;
 import java.util.*;
 
 public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable {
@@ -122,6 +123,16 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
         return Optional.empty();
     }
 
+    public Method getMethodOrWarn(String methodName, String callerName) {
+        Optional<Method> methodOpt = getMethodTry(methodName);
+        if (methodOpt.isEmpty()) {
+            System.err.println("[" + callerName + "]: Tried to find a method by the name of " + methodName +
+                " but it couldn't be found in the symbol table.");
+            return null;
+        }
+        return methodOpt.get();
+    }
+
     public void addField(Symbol field) {
         this.fields.add(field);
     }
@@ -176,6 +187,27 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
         }
 
         return Optional.empty();
+    }
+
+    public Boolean symbolIsDeclared(String parentMethodName, String symbolName) {
+        Optional<Method> methodOpt = this.getMethodTry(parentMethodName);
+
+        if (methodOpt.isPresent()) {
+            Method method = methodOpt.get();
+            for (Symbol symbol : method.getVariables()) {
+                if (symbol.getName().equals(symbolName)) return true;
+            }
+
+            for (Symbol symbol : method.getArguments()) {
+                if (symbol.getName().equals(symbolName)) return true;
+            }
+        }
+
+        for (Symbol symbol : this.fields) {
+            if (symbol.getName().equals(symbolName)) return true;
+        }
+
+        return false;
     }
 
 

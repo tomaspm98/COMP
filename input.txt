@@ -40,7 +40,7 @@ class myClass extends importedClass {
 	    myLocalInt = myLocalInt + anInt + 2;
 	    myLocalInt = myLocalInt * 2 + 3 * intArg;
 
-	    this.anInt = 5 * 10 + myLocalInt;
+	    anInt = 5 * 10 + myLocalInt;
 	    intArg = 1;
 	}
 

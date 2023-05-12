@@ -54,9 +54,7 @@ public class Launcher {
 
         JmmSemanticsResult analysisResult = analyser.semanticAnalysis(parserResult);
 
-        TestUtils.noErrors(analysisResult.getReports());
-
-        String code1 = SpecsIo.read(inputFile);
+        //TestUtils.noErrors(analysisResult.getReports());
 
         Optimizer optimizer = new Optimizer();
 
