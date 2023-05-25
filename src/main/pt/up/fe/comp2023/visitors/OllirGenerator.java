@@ -417,7 +417,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
 
         String lastLine = "";
 
-        if (node.getJmmChild(1).getKind().equals("ArrayInstantiation") || node.getJmmChild(1).getKind().equals("Instantiation")) {
+        if (node.getJmmChild(1).getKind().equals("Instantiation")) {
             lastLine = "invokespecial(" + info.getResultNameAndType() +",\"<init>\").V;";
             info.addAuxLine(lastLine);
         }
@@ -457,7 +457,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         this.tempVariables += expressionVisitor.getUsedAuxVariables();
 
         String lastLine = "\n";
-        if (node.getJmmChild(0).getKind().equals("ArrayInstantiation") || node.getJmmChild(0).getKind().equals("Instantiation")) {
+        if (node.getJmmChild(0).getKind().equals("Instantiation")) {
             lastLine = getIdentationString() + "invokespecial(" + varName + "." + assignedExprNodeData.getOllirType() + ",\"<init>\").V;\n\n";
         }
 
@@ -509,7 +509,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             arrayHolderAndAuxLines.append(getIdentationString()).append(varName);
         }
 
-        if (node.getJmmChild(1).getKind().equals("ArrayInstantiation") || node.getJmmChild(1).getKind().equals("Instantiation")) {
+        if (node.getJmmChild(1).getKind().equals("Instantiation")) {
             lastLine = getIdentationString() + "invokespecial(" + varName + "[" + indexExpressionData.getResultNameAndType() + "]." + getArrayOllirType(arrayVarInfo.getSymbol().getType(), symbolTable.getClassName())
                     + ",\"<init>\").V;\n\n";
         }

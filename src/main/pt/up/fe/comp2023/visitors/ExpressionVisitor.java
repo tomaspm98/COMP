@@ -84,7 +84,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
                 return getImportedMethodRootType(methodCallNode, outerMethodName);
             }
 
-            case "ArrayAccess" -> {
+            case "ArrayAccess", "ArrayInstantiation" -> {
                 return "i32";
             }
 
@@ -394,7 +394,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
     .i32
      */
     private ExpressionVisitorInformation dealWithArrayLength(JmmNode node, String methodName) {
-        StringBuilder retName = new StringBuilder("arraylength(");
+        String newAuxVar = getNewAuxVariable();
+        StringBuilder lastAuxLine = new StringBuilder(newAuxVar).append(".i32 :=.i32 arraylength(");
 
         //-- variable inside parenthesis
 
@@ -403,10 +404,11 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         JmmNode exprNode = node.getObject("array", JmmNode.class);
 
         var exprNodeInfo = visitExpressionAndStoreInfo(ret, exprNode, methodName);
-        retName.append(exprNodeInfo.getResultNameAndType()).append(")");
+        lastAuxLine.append(exprNodeInfo.getResultNameAndType()).append(").i32;");
 
+        ret.addAuxLine(lastAuxLine.toString());
         //-- return type
-
+        ret.setResultName(newAuxVar);
         ret.setOllirType("i32");
         return ret;
     }
@@ -543,10 +545,15 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
 
         ExpressionVisitorInformation sizeInfo = visitExpressionAndStoreInfo(ret, sizeExpression, methodName);
 
-        retName.append(sizeInfo.getResultNameAndType()).append(")");
+        String newAuxVar = getNewAuxVariable();
+        StringBuilder lastAuxLine = new StringBuilder(newAuxVar);
+        lastAuxLine.append(".array.").append(ollirTypeName).append(" :=.array.").append(ollirTypeName)
+                .append(" new(array, ").append(sizeInfo.getResultNameAndType()).append(").array.").append(ollirTypeName).append(";");
+
+        ret.addAuxLine(lastAuxLine.toString());
 
 
-        ret.setResultName(retName.toString());
+        ret.setResultName(newAuxVar);
         ret.setOllirType("array." + ollirTypeName);
         return ret;
     }

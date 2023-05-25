@@ -72,5 +72,7 @@ class myClass extends importedClass {
 
         iArr[iArr[localIntArray[0]]] = iArr[iArr[localIntArray[0]]];
         iArr[iArr[localIntArray[argumentMadeUp.getInt()]]] = iArr[iArr[madeUpType.getInt(iArr[0])]];
+
+        iArr = new int[madeUpType.getInt(iArr.length)];
     }
 }

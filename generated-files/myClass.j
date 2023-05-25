@@ -72,7 +72,7 @@
 
 .method public m2(I[ILmadeUp;)V
 	.limit stack 22
-	.limit locals 70
+	.limit locals 75
 	aload 4
 	iconst_0
 	iconst_1
@@ -415,5 +415,24 @@
 	iload 59
 	iload 67
 	iastore
+	aload_0
+	getfield myClass/madeUpType LmadeUp;
+	astore 69
+	aload_0
+	getfield myClass/iArr [I
+	astore 70
+	aload 70
+	arraylength
+	istore 71
+	aload 69
+	iload 71
+	invokevirtual madeUp/getInt(I)I
+	istore 72
+	iload 72
+	newarray int
+	astore 73
+	aload_0
+	aload 73
+	putfield myClass/iArr [I
 	return
 .end method
