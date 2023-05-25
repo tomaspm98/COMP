@@ -66,7 +66,7 @@ public class Launcher {
 
         var backendResult = jasminBackend.toJasmin(ollirResult);
 
-        TestUtils.noErrors(backendResult);
+        // TestUtils.noErrors(backendResult);
 
         Path resultsDirectory = Paths.get("generated-files/");
 

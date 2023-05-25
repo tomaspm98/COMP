@@ -329,7 +329,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         switch (node.getKind()) {
             case  "MethodCall", "ArrayLength", "Parenthesis", "UnaryBinaryOp", "ArithmeticBinaryOp",
                     "BoolBinaryOp", "ArrayInstantiation", "Instantiation", "Integer", "Boolean",
-                    "Identifier", "ClassAccess", "ExplicitClassFieldAccess" -> {
+                    "Identifier", "ClassAccess", "ExplicitClassFieldAccess", "ArrayAccess" -> {
                 return new Expression();
             }
             default -> {

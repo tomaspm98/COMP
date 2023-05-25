@@ -14,37 +14,7 @@ class myClass extends importedClass {
 	ioPlus importedType;
 	madeUp madeUpType;
 
-	public static void method1(String[] strings, int[] ints, madeUp madeUpArgument, int intArg) {
-
-	    //test local declaration
-	    int[] myLocalIntArr;
-	    String[] myLocalStringArr;
-	    ioPlus[] myLocalImportedArr;
-	    madeUp[] myLocalMadeUpArr;
-	    ioPlus myLocalImported;
-	    madeUp myLocalMadeUp;
-	    int myLocalInt;
-
-	    //test imported method call with random arguments, simple statement
-	    myLocalImported.randomMethod();
-	    myLocalImported.otherRandomMethod(myLocalIntArr);
-	    myLocalImported.anotherRandomMethod(myLocalMadeUp);
-	    myLocalImported.yetAnotherRandomMethod(strings, ints, madeUpArgument, myLocalMadeUp, myLocalImported);
-	    myLocalImported.fifthRandomMethod(aStr, strArr, iArr, myLocalIntArr, importedType, myLocalImported);
-
-	    //test simple assignment
-
-	    myLocalInt = 2;
-	    myLocalInt = anInt;
-	    myLocalInt = anInt + 2;
-	    myLocalInt = myLocalInt + anInt + 2;
-	    myLocalInt = myLocalInt * 2 + 3 * intArg;
-
-	    anInt = 5 * 10 + myLocalInt;
-	    intArg = 1;
-	}
-
-	public int get() {
+    public int get() {
         return a;
     }
 
@@ -64,10 +34,43 @@ class myClass extends importedClass {
         return 3;
     }
 
-	public static void main(String[] args) {
-        myClass A;
-		ioPlus.printHelloWorld();
-        A = new myClass();
-        A.m1();
-	}
+    public void m2(int argumentInt, int[] argumentIntArray, madeUp argumentMadeUp) {
+        int localInt;
+        int[] localIntArray;
+        madeUp localMadeUp;
+
+
+        localIntArray[0] = 1;
+        localIntArray[1] = localInt;
+        localIntArray[2] = argumentInt;
+        localIntArray[3] = argumentIntArray[0];
+        localIntArray[4] = localMadeUp.getInt();
+        localIntArray[5] = argumentMadeUp.getInt();
+        localIntArray[6] = localMadeUp.getInt(localInt, localMadeUp, localIntArray, argumentMadeUp);
+        localIntArray[7] = argumentMadeUp.getInt(1, this.m1(), this.put(1), this.put(this.get()), this.put(this.put(this.get())));
+
+        argumentIntArray[0] = 1;
+        argumentIntArray[1] = localInt;
+        argumentIntArray[2] = argumentInt;
+        argumentIntArray[3] = argumentIntArray[0];
+        argumentIntArray[4] = localMadeUp.getInt();
+        argumentIntArray[5] = argumentMadeUp.getInt();
+        argumentIntArray[6] = localMadeUp.getInt(localInt, localMadeUp, localIntArray, argumentMadeUp);
+        argumentIntArray[7] = argumentMadeUp.getInt(1, this.m1(), this.put(1), this.put(this.get()), this.put(this.put(this.get())));
+
+        iArr[0] = 1;
+        iArr[1] = localInt;
+        iArr[2] = argumentInt;
+        iArr[3] = argumentIntArray[0];
+        iArr[4] = localMadeUp.getInt();
+        iArr[5] = argumentMadeUp.getInt();
+        iArr[6] = localMadeUp.getInt(localInt, localMadeUp, localIntArray, argumentMadeUp);
+        iArr[7] = argumentMadeUp.getInt(1, this.m1(), this.put(1), this.put(this.get()), this.put(this.put(this.get())));
+
+        localInt = localIntArray[localIntArray[0]];
+        localIntArray[localIntArray[0]] = localIntArray[localIntArray[0]];
+
+        iArr[iArr[localIntArray[0]]] = iArr[iArr[localIntArray[0]]];
+        iArr[iArr[localIntArray[argumentMadeUp.getInt()]]] = iArr[iArr[madeUpType.getInt(iArr[0])]];
+    }
 }

@@ -78,28 +78,28 @@ condition
 
 expression
     :
-    classNameExp=expression '.' methodName=ID '('  (expression ( ',' expression)*)? ')' #MethodCall // TODO Check if class name exists and has a 'methodName' method - return type is method's return type
+    classNameExp=expression '.' methodName=ID '('  (expression ( ',' expression)*)? ')' #MethodCall
     | 'this' '.' methodName=ID '('  (expression ( ',' expression)*)? ')' #ThisMethodCall
-    | array=expression '.' 'length' #ArrayLength // TODO Check if expression is an array - return type is integer
-    | array=expression '[' index=expression ']' #ArrayAccess // TODO check if array is an array and if index is an integer - return type is array's type (integer)
-    | '(' expression ')' #Parenthesis // TODO return type depends on nested expression
-    | '!' bool=expression #UnaryBinaryOp // TODO check if bool is a boolean or BoolOp - return type is Boolean
-    | arg1=expression op=('*' | '/' | '%') arg2=expression #ArithmeticBinaryOp // TODO check if arg1 and arg2 are integers - return type is integer
-    | arg1=expression op=('+' | '-') arg2=expression #ArithmeticBinaryOp // TODO check if arg1 and arg2 are integers - return type is integer
-    | arg1=expression op=('<' | '>' | '<=' | '>=') arg2=expression #BoolBinaryOp // TODO check if arg1 and arg2 are integers - return type is boolean
-    | arg1=expression op=('==' | '!=') arg2=expression #BoolBinaryOp // TODO check if arg1 and arg2 are of same type - return type is boolean
-    | arg1=expression op='&&' arg2=expression #BoolBinaryOp // TODO check if arg1 and arg2 are booleans - return type is boolean
-    | arg1=expression op='||' arg2=expression #BoolBinaryOp // TODO check if arg1 and arg2 are booleans - return type ias boolean
+    | array=expression '.' 'length' #ArrayLength
+    | array=expression '[' index=expression ']' #ArrayAccess
+    | '(' expression ')' #Parenthesis
+    | '!' bool=expression #UnaryBinaryOp
+    | arg1=expression op=('*' | '/' | '%') arg2=expression #ArithmeticBinaryOp
+    | arg1=expression op=('+' | '-') arg2=expression #ArithmeticBinaryOp
+    | arg1=expression op=('<' | '>' | '<=' | '>=') arg2=expression #BoolBinaryOp
+    | arg1=expression op=('==' | '!=') arg2=expression #BoolBinaryOp
+    | arg1=expression op='&&' arg2=expression #BoolBinaryOp
+    | arg1=expression op='||' arg2=expression #BoolBinaryOp
     | 'new' typeName='int' '[' size=expression ']' #ArrayInstantiation
     | 'new' typeName='boolean' '[' size=expression ']' #ArrayInstantiation
     | 'new' typeName='String' '[' size=expression ']' #ArrayInstantiation
-    | 'new' typeName=ID '[' size=expression ']' #ArrayInstantiation // TODO check if size is integer - return type is typeName array
-    | 'new' name=ID '(' ')' #Instantiation // TODO check if className is in scope (check imports or main className) - return type is className
-    | value=INT #Integer // TODO return type is integer
-    | value=BOOL #Boolean // TODO return type is boolean
-    | value=ID #Identifier // TODO check if value exists - return type is value's type.
+    | 'new' typeName=ID '[' size=expression ']' #ArrayInstantiation
+    | 'new' name=ID '(' ')' #Instantiation
+    | value=INT #Integer
+    | value=BOOL #Boolean
+    | value=ID #Identifier
     | classField #ExplicitClassFieldAccess
-    | 'this' #ClassAccess // TODO return type is main className
+    | 'this' #ClassAccess
     ;
 
 classField

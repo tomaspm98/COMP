@@ -189,7 +189,8 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
                 for (int i = 0; i < method.getArguments().size(); i++) {
                     Symbol param = method.getArguments().get(i);
                     if (param.getName().equals(jmmVarName)) {
-                        evi.setResultName("$" + i + "." + jmmVarName);
+                        // removed $i.jmmVarName because apparently it's optional
+                        evi.setResultName(jmmVarName);
                         evi.setOllirType(OllirGenerator.jmmTypeToOllirType(param.getType(), symbolTable.getClassName()));
                     }
                 }
@@ -473,6 +474,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             return null;
         }
 
+
         JmmNode arrayIndexExpression =  node.getJmmChild(0).getJmmChild(0);
         JmmNode assignedExpression =  node.getJmmChild(1);
 
@@ -485,13 +487,36 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         this.tempVariables += assignedExpressionVisitor.getUsedAuxVariables();
 
         String lastLine = "\n";
+
+        /*
+        will contain something like
+            aux0 = getfield(this, a.array.i32);
+            aux0
+
+        or
+            a
+         in case it's a local/argument variable.
+         */
+        StringBuilder arrayHolderAndAuxLines = new StringBuilder();
+        String varOllirType = jmmTypeToOllirType(arrayVarInfo.getSymbol().getType(), symbolTable.getClassName());
+
+        if (arrayVarInfo.getSymbolPosition().equals(SymbolPosition.FIELD)) {
+            String newAuxVarName = "aux" + tempVariables;
+            tempVariables++;
+            arrayHolderAndAuxLines.append(getIdentationString()).append(newAuxVarName).append(".").append(varOllirType).append(" :=.").append(varOllirType).append(" getfield(this, ").append(varName).append(".").append(varOllirType).append(").").append(varOllirType).append(";\n")
+                    .append(getIdentationString()).append(newAuxVarName);
+        } else {
+            arrayHolderAndAuxLines.append(getIdentationString()).append(varName);
+        }
+
         if (node.getJmmChild(1).getKind().equals("ArrayInstantiation") || node.getJmmChild(1).getKind().equals("Instantiation")) {
             lastLine = getIdentationString() + "invokespecial(" + varName + "[" + indexExpressionData.getResultNameAndType() + "]." + getArrayOllirType(arrayVarInfo.getSymbol().getType(), symbolTable.getClassName())
                     + ",\"<init>\").V;\n\n";
         }
 
-        return exprAuxInfoToString(indexExpressionData) + exprAuxInfoToString(assignedExpressionData) + getIdentationString() +
-                varName + "[" + indexExpressionData.getResultNameAndType() + "]." + getArrayOllirType(arrayVarInfo.getSymbol().getType(), symbolTable.getClassName())
+        return exprAuxInfoToString(indexExpressionData) +
+                exprAuxInfoToString(assignedExpressionData) +
+                arrayHolderAndAuxLines + "[" + indexExpressionData.getResultNameAndType() + "]." + getArrayOllirType(arrayVarInfo.getSymbol().getType(), symbolTable.getClassName())
                 +  " :=." + assignedExpressionData.getOllirType() + " " + assignedExpressionData.getResultNameAndType() + ";\n" + lastLine;
     }
 

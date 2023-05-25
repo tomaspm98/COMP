@@ -189,7 +189,7 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
         return Optional.empty();
     }
 
-    public Boolean symbolIsDeclared(String parentMethodName, String symbolName) {
+    public Boolean symbolIsDeclared(String parentMethodName, String symbolName, String currentAuxVarName) {
         Optional<Method> methodOpt = this.getMethodTry(parentMethodName);
 
         if (methodOpt.isPresent()) {
@@ -205,6 +205,12 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
         for (Symbol symbol : this.fields) {
             if (symbol.getName().equals(symbolName)) return true;
+        }
+
+        if (symbolName.startsWith("aux")) {
+            int currentAuxVarNumber = Integer.parseInt(currentAuxVarName.substring(3));
+            int symbolAuxVarNumber = Integer.parseInt(symbolName.substring(3));
+            return symbolAuxVarNumber <= currentAuxVarNumber;
         }
 
         return false;

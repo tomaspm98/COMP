@@ -7,6 +7,7 @@ import pt.up.fe.comp2023.SymbolTable;
 import pt.up.fe.comp2023.node.information.Method;
 import pt.up.fe.comp2023.utils.ExpressionVisitorInformation;
 import pt.up.fe.comp2023.utils.SymbolInfo;
+import pt.up.fe.comp2023.utils.SymbolPosition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,10 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         return ret;
     }
 
+    private String getCurrentAuxVar() {
+        return "aux" + (this.currentAuxVariable-1);
+    }
+
     private ExpressionVisitorInformation visitExpressionAndStoreInfo(ExpressionVisitorInformation storage,
                                                                      JmmNode toVisit, String methodName) {
         ExpressionVisitorInformation exprNodeInfo = visit(toVisit, methodName);
@@ -45,8 +50,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         Optional<Method> optMethod = this.symbolTable.getMethodTry(outerMethodName);
 
         if (optMethod.isEmpty()) {
-            System.err.println("Tried to find method '" + outerMethodName + "' in symbol table but it couldn't be found!");
-            return "MIDERROR";
+            System.err.println("Tried to find outer method '" + outerMethodName + "' in symbol table but it couldn't be found!");
+            return "getImportedMethodReturnType error: outer method \"" + outerMethodName + "\" not found";
         }
 
         switch (parent.getKind()) {
@@ -64,21 +69,40 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
             }
 
             case "Assignment" -> {
-                JmmNode methodNode = parent.getJmmChild(0).getJmmChild(0);
-                String varName = methodNode.get("value");
+                String varName = parent.get("varName");
                 SymbolInfo symbolInfo = symbolTable.getMostSpecificSymbol(outerMethodName, varName);
                 return OllirGenerator.jmmTypeToOllirType(symbolInfo.getSymbol().getType(), symbolTable.getClassName());
             }
 
             case "ArrayAssignment" -> {
-                String varName = parent.getJmmChild(0).get("varName");
+                String varName = parent.get("varName");
                 SymbolInfo symbolInfo = symbolTable.getMostSpecificSymbol(outerMethodName, varName);
                 return OllirGenerator.getArrayOllirType(symbolInfo.getSymbol().getType(), symbolTable.getClassName());
+            }
+
+            case "MethodCall" -> {
+                return getImportedMethodRootType(methodCallNode, outerMethodName);
+            }
+
+            case "ArrayAccess" -> {
+                return "i32";
             }
 
             default -> {
                 return "HUGEERROR";
             }
+        }
+    }
+
+    public String getImportedMethodRootType(JmmNode exprStatement, String methodName) {
+        JmmNode current = exprStatement;
+        while (true) {
+            JmmNode leftChild = current.getJmmChild(0);
+            if (leftChild.getKind().equals("Identifier")) {
+                Optional<SymbolInfo> symbolInfo = symbolTable.getMostSpecificSymbolTry(methodName, leftChild.get("value"));
+                return symbolInfo.map(info -> OllirGenerator.jmmTypeToOllirType(info.getSymbol().getType(), "errorInGetImportedMethodRootType")).orElseGet(() -> leftChild.get("value"));
+            }
+            current = leftChild;
         }
     }
 
@@ -248,16 +272,16 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
             return;
         }
 
+        StringBuilder params = new StringBuilder();
+        getAndAppendParamsCommaSep(methodCallNode, parentMethodName, parentRet, params);
         String methodCallHolderName = getNewAuxVariable();
-        StringBuilder storeCallValueLine = new StringBuilder();
-        storeCallValueLine.append(methodCallHolderName).append(".").append(methodType)
-                .append(" :=.").append(methodType)
-                .append(" invokevirtual(").append(calledMethodsObj.getResultNameAndType()).append(", \"").append(calledMethodName).append("\"");
 
-        getAndAppendParamsCommaSep(methodCallNode, parentMethodName, parentRet, storeCallValueLine);
-        storeCallValueLine.append(").").append(methodType).append(";");
+        String storeCallValueLine = methodCallHolderName + "." + methodType +
+                " :=." + methodType +
+                " invokevirtual(" + calledMethodsObj.getResultNameAndType() + ", \"" + calledMethodName + "\"" +
+                params + ")." + methodType + ";";
 
-        parentRet.addAuxLine(storeCallValueLine.toString());
+        parentRet.addAuxLine(storeCallValueLine);
 
         parentRet.setResultName(methodCallHolderName);
         parentRet.setOllirType(methodType);
@@ -315,7 +339,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         else if (isImportedClass(calledMethodsObj)) {
             dealWithImportedClassStaticMethodCall(methodCallNode, calledMethodsObj, evInfoRet, parentMethodName);
         }
-        else if (symbolTable.symbolIsDeclared(parentMethodName, calledMethodsObj.getResultName())) {
+        else if (symbolTable.symbolIsDeclared(parentMethodName, calledMethodsObj.getResultName(), getCurrentAuxVar())) {
             dealWithImportedClassInstanceMethodCall(methodCallNode, calledMethodsObj, evInfoRet, parentMethodName);
         }
         else {
@@ -334,13 +358,16 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         String methodType = OllirGenerator.jmmTypeToOllirType(calledMethod.getRetType(), symbolTable.getClassName());
 
 
+        StringBuilder params = new StringBuilder();
+
+        getAndAppendParamsCommaSep(methodCallNode, parentMethodName, retInfo, params);
         String methodCallHolderName = getNewAuxVariable();
         StringBuilder storeCallValueLine = new StringBuilder();
+
         storeCallValueLine.append(methodCallHolderName).append(".").append(methodType)
                 .append(" :=.").append(methodType)
-                .append(" invokevirtual(").append("this").append(", \"").append(calledMethod).append("\"");
-
-        getAndAppendParamsCommaSep(methodCallNode, parentMethodName, retInfo, storeCallValueLine);
+                .append(" invokevirtual(").append("this").append(", \"").append(calledMethod.getName()).append("\"");
+        storeCallValueLine.append(params);
         storeCallValueLine.append(").").append(methodType).append(";");
 
         retInfo.addAuxLine(storeCallValueLine.toString());
@@ -408,22 +435,38 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         ExpressionVisitorInformation arrayExprInfo = visitExpressionAndStoreInfo(ret, arrayNode, methodName);
         ExpressionVisitorInformation indexExprInfo = visitExpressionAndStoreInfo(ret, indexNode, methodName);
 
-        //-- ExprName
-        retName.append(arrayExprInfo.getResultName());
-
-        //-- [ ExprName.Type ]
-        retName.append("[").append(indexExprInfo.getResultNameAndType()).append("]");
-
-        //-- return type
-        SymbolInfo arrayVarInfo = symbolTable.getMostSpecificSymbol(methodName, arrayExprInfo.getResultName());
-        if (arrayVarInfo == null) {
-            System.err.println("arrayVarInfo is null! tried to search for '" + arrayExprInfo.getResultName() + "'.");
-            return null;
+        if (node.getJmmChild(0).getKind().equals("Identifier")) {
+            String arrayName = node.getJmmChild(0).get("value");
+            SymbolInfo arrayVarInfo = symbolTable.getMostSpecificSymbol(methodName, arrayExprInfo.getResultName());
+            if (arrayVarInfo != null && arrayVarInfo.getSymbolPosition().equals(SymbolPosition.FIELD)) {
+                String newAuxVar = getNewAuxVariable();
+                StringBuilder getFieldAuxLine = new StringBuilder(newAuxVar);
+                String arrayOllirType = OllirGenerator.jmmTypeToOllirType(arrayVarInfo.getSymbol().getType(), symbolTable.getClassName());
+                getFieldAuxLine.append(".").append(arrayOllirType).append(" :=.").append(arrayOllirType).append(" getfield(").append("this").append(", ").append(arrayName).append(".").append(arrayOllirType).append(").").append(arrayOllirType).append(";");
+                ret.addAuxLine(getFieldAuxLine.toString());
+                retName.append(newAuxVar);
+            }
+            else {
+                retName.append(arrayExprInfo.getResultName());
+            }
+        }
+        else {
+            retName.append(arrayExprInfo.getResultName());
         }
 
+        //-- [ ExprName.Type ]
+        String lastAuxVar = getNewAuxVariable();
+        StringBuilder lastAuxLine = new StringBuilder(lastAuxVar);
+        String arrayOllirType = arrayExprInfo.getOllirType();
+        if (arrayOllirType.contains("array.")) {
+            arrayOllirType = arrayOllirType.substring(arrayOllirType.indexOf("array.") + 6);
+        }
+
+        lastAuxLine.append(".").append(arrayOllirType).append(" :=.").append(arrayOllirType).append(" ").append(retName).append("[").append(indexExprInfo.getResultNameAndType()).append("].").append(arrayOllirType).append(";");
+        ret.addAuxLine(lastAuxLine.toString());
         //--
-        ret.setResultName(retName.toString());
-        ret.setOllirType(OllirGenerator.getArrayOllirType(arrayVarInfo.getSymbol().getType(), symbolTable.getClassName()));
+        ret.setResultName(lastAuxVar);
+        ret.setOllirType(arrayOllirType);
         return ret;
     }
 
@@ -573,7 +616,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
                 for (int i = 0; i < method.getArguments().size(); i++) {
                     Symbol param = method.getArguments().get(i);
                     if (param.getName().equals(value)) {
-                        ret.setResultName("$" + (i + 1) + "." + value);
+                        // removed $i.jmmVarName because apparently it's optional
+                        ret.setResultName(value);
                         ret.setOllirType(OllirGenerator.jmmTypeToOllirType(param.getType(), symbolTable.getClassName()));
                     }
                 }
