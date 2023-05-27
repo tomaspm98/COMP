@@ -14,6 +14,24 @@ class myClass extends importedClass {
 	ioPlus importedType;
 	madeUp madeUpType;
 
+
+
+    public int[] put(int n) {
+        int[] a;
+        return a;
+    }
+
+    public boolean m3(boolean arg)  {
+        return arg && true;
+    }
+
+    public void m1() {
+        boolean a;
+        this.put(1);
+        a = this.m2(true);
+        madeUpType.getInt(1);
+    }
+
     public int get() {
         return a;
     }

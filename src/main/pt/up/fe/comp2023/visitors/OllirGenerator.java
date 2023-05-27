@@ -31,24 +31,29 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
 
     // Utility functions
 
-    public static String jmmTypeToOllirType(String jmmType, String className) {
+    public static String jmmTypeToOllirType(String jmmType, String className, boolean isArray) {
+        StringBuilder ret = new StringBuilder();
+        if (isArray) {
+            ret.append("array.");
+        }
         switch (jmmType) {
             case "int" -> {
-                return "i32";
+                ret.append("i32");
             }
             case "boolean" -> {
-                return "bool";
+                ret.append("bool");
             }
             case "void" -> {
-                return "V";
+                ret.append("V");
             }
             case "this" -> {
-                return className;
+                ret.append(className);
             }
             default -> {
-                return jmmType;
+                ret.append(jmmType);
             }
         }
+        return ret.toString();
     }
 
     public static String jmmTypeToOllirType(Type jmmType, String className) {
@@ -95,7 +100,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             ret.append("array.");
         }
 
-        ret.append(jmmTypeToOllirType(type.getName(), className));
+        ret.append(jmmTypeToOllirType(type, className));
         return ret.toString();
     }
 
@@ -298,7 +303,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             }
         }
 
-        ret.append(").").append(jmmTypeToOllirType(method.getRetType().getName(), symbolTable.getClassName())).append(" {\n");
+        ret.append(").").append(jmmTypeToOllirType(method.getRetType(), symbolTable.getClassName())).append(" {\n");
         increaseIdentation();
 
         List<JmmNode> methodStatements = node.getChildren().stream().filter((child) -> child.getKind().equals("MethodStatement")).map((child) -> child.getJmmChild(0)) // get statement inside methodStatement
@@ -333,14 +338,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
     }
 
     private String dealWithType(JmmNode node, String __) {
-        StringBuilder ret = new StringBuilder();
-
-        if ((boolean) node.getObject("isArray")) {
-            ret.append("array.");
-        }
-
-        ret.append(jmmTypeToOllirType(node.get("typeName"), symbolTable.getClassName()));
-        return ret.toString();
+        return jmmTypeToOllirType(node.get("typeName"), symbolTable.getClassName(), (boolean) node.getObject("isArray"));
     }
 
     private String dealWithScopeStatement(JmmNode node, String __) {
@@ -390,7 +388,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         ExpressionVisitorInformation info = exprVisitor.visit(exprNode, methodName);
         this.tempVariables += exprVisitor.getUsedAuxVariables();
 
-        return exprInfoToString(info) + ";\n\n";
+        return exprAuxInfoToString(info) + "\n\n";
     }
 
     private String dealWithClassFieldAssignmentStatement(JmmNode node, String methodName) {

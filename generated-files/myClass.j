@@ -17,56 +17,14 @@
 	return
 .end method
 
-.method public get()I
-	.limit stack 1
-	.limit locals 3
-	aload_0
-	getfield myClass/a I
-	istore_1
-	iload_1
-	ireturn
-.end method
-
-.method public put(I)I
+.method public m2(Z)Z
 	.limit stack 2
-	.limit locals 3
-	aload_0
+	.limit locals 4
 	iload_1
-	putfield myClass/a I
-	iconst_1
-	ireturn
-.end method
-
-.method public m1()I
-	.limit stack 2
-	.limit locals 6
-	aload_0
-	iconst_2
-	putfield myClass/a I
-	aload_0
-	invokevirtual myClass/get()I
-	istore_1
-	iload_1
-	invokestatic io/println(I)V
-	new myClass
-	astore_2
-	aload_2
-	invokespecial myClass/<init>()V
-	aload_2
-	invokevirtual myClass/get()I
-	istore_3
 	iload_3
-	invokestatic io/println(I)V
-	aload_2
-	iconst_2
-	invokevirtual myClass/put(I)I
-	pop
-	aload_2
-	invokevirtual myClass/get()I
-	istore 4
-	iload 4
-	invokestatic io/println(I)V
-	iconst_3
+	iand
+	istore_2
+	iload_2
 	ireturn
 .end method
 
@@ -226,10 +184,8 @@
 	iload 5
 	iastore
 	aload_0
-	getfield myClass/iArr [I
-	astore 27
-	aload 27
-	iconst_2
+	invokevirtual myClass/m2()Z
+	istore_1
 	iload_1
 	iastore
 	aload_2

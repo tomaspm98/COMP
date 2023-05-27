@@ -122,8 +122,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         int startingIndex = node.getKind().equals("MethodCall") ? 1 : 0;
 
         List<JmmNode> parameterExpressions =
-                (node.getChildren().size() > startingIndex) ?
-                        node.getChildren().subList(1, node.getNumChildren())
+                (node.getChildren().size() >= startingIndex) ?
+                        node.getChildren().subList(startingIndex, node.getChildren().size())
                         :
                         new ArrayList<>();
 
@@ -525,6 +525,8 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         String type = "bool";
         String lastAuxLine = lastAuxVar + "." + type + " :=." + type + " " + arg1Info.getResultNameAndType() + " " + opAndType + arg2Info.getResultNameAndType() + ";";
 
+        System.out.println("lastAuxLine: " + lastAuxLine);
+
         ret.addAuxLine(lastAuxLine);
         ret.setResultName(lastAuxVar);
         ret.setOllirType(type);
@@ -540,7 +542,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         StringBuilder retName = new StringBuilder("new(array, ");
         ExpressionVisitorInformation ret = new ExpressionVisitorInformation();
 
-        String ollirTypeName = OllirGenerator.jmmTypeToOllirType(node.get("typeName"), symbolTable.getClassName());
+        String ollirTypeName = OllirGenerator.jmmTypeToOllirType(node.get("typeName"), symbolTable.getClassName(), true);
         JmmNode sizeExpression = node.getObject("size", JmmNode.class);
 
         ExpressionVisitorInformation sizeInfo = visitExpressionAndStoreInfo(ret, sizeExpression, methodName);
@@ -562,7 +564,7 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
         StringBuilder retName = new StringBuilder("new(");
         ExpressionVisitorInformation ret = new ExpressionVisitorInformation();
 
-        String ollirTypeName = OllirGenerator.jmmTypeToOllirType(node.get("name"), symbolTable.getClassName());
+        String ollirTypeName = OllirGenerator.jmmTypeToOllirType(node.get("name"), symbolTable.getClassName(), false);
 
         retName.append(ollirTypeName).append(")");
 
