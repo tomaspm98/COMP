@@ -14,14 +14,26 @@ class myClass extends importedClass {
 	ioPlus importedType;
 	madeUp madeUpType;
 
+    public void testIfs() {
+        boolean a;
+        int i;
 
+        if (a) {
+            i = 1;
+        } else {
+            i = 2;
+        }
+    }
 
+/*
     public int[] put(int n) {
         int[] a;
         return a;
     }
 
     public boolean m3(boolean arg)  {
+        boolean a;
+        a = arg && !arg;
         return arg && true;
     }
 
@@ -93,4 +105,5 @@ class myClass extends importedClass {
 
         iArr = new int[madeUpType.getInt(iArr.length)];
     }
+    */
 }

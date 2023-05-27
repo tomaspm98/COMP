@@ -478,14 +478,16 @@ public class ExpressionVisitor extends AJmmVisitor<String, ExpressionVisitorInfo
     }
 
     private ExpressionVisitorInformation dealWithUnaryBoolOp(JmmNode node, String methodName) {
-        StringBuilder retName = new StringBuilder("!.bool ");
-        ExpressionVisitorInformation ret = new ExpressionVisitorInformation(false);
+        ExpressionVisitorInformation ret = new ExpressionVisitorInformation(true);
         JmmNode expressionNode = node.getObject("bool", JmmNode.class);
 
         ExpressionVisitorInformation exprInfo = visitExpressionAndStoreInfo(ret, expressionNode, methodName);
-        retName.append(exprInfo.getResultNameAndType());
 
-        ret.setResultName(retName.toString());
+        String newAuxVar = getNewAuxVariable();
+        String lastAuxLine = newAuxVar + ".bool :=.bool !.bool " + exprInfo.getResultNameAndType() + ";";
+
+        ret.addAuxLine(lastAuxLine);
+        ret.setResultName(newAuxVar);
         ret.setOllirType("bool");
         return ret;
     }

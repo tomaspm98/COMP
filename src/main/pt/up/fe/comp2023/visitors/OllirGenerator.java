@@ -22,6 +22,10 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
     private final SpecsList<Report> reports;
     private int tempVariables;
 
+    private int whileCounter;
+
+    private int ifCounter;
+
     public OllirGenerator(SymbolTable symbolTable, SpecsList<Report> reports) {
         super();
         this.symbolTable = symbolTable;
@@ -114,6 +118,22 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
 
     public static String getIdentationString() {
         return "\t".repeat(indentation);
+    }
+
+    private String getNewIfTrueTag() {
+        return "IFTRUE" + ifCounter;
+    }
+
+    private String getNewEndIfTag() {
+        return "ENDIF" + ifCounter;
+    }
+
+    private String getNewWhileTag() {
+        return "WHILE" + whileCounter;
+    }
+
+    private String getNewEndWhileTag() {
+        return "ENDWHILE" + whileCounter;
     }
 
     @Override
@@ -341,13 +361,12 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         return jmmTypeToOllirType(node.get("typeName"), symbolTable.getClassName(), (boolean) node.getObject("isArray"));
     }
 
-    private String dealWithScopeStatement(JmmNode node, String __) {
-        StringBuilder ret = new StringBuilder("{\n");
+    private String dealWithScopeStatement(JmmNode node, String methodName) {
+        StringBuilder ret = new StringBuilder();
         increaseIdentation();
         for (JmmNode child : node.getChildren()) {
-            ret.append(visit(child)).append("\n");
+            ret.append(visit(child, methodName)).append("\n");
         }
-        ret.append("}\n\n");
         decreaseIdentation();
         return ret.toString();
     }
@@ -356,13 +375,68 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         StringBuilder ret = new StringBuilder();
 
         // BAD CODE !! If and While should have different types, but as to not interfere with other branches this is a patchwork solution
-        if (node.getNumChildren() == 3) { // if
-            ret.append(getIdentationString()).append("if (");
-            ret.append(visit(node.getJmmChild(0), methodName)).append(") ").append(visit(node.getJmmChild(1), methodName)).append("\nelse ").append(visit(node.getJmmChild(2))).append("\n");
-        } else { // while
-            ret.append(getIdentationString()).append("while (");
-            ret.append(visit(node.getJmmChild(0), methodName)).append(") ").append(visit(node.getJmmChild(1), methodName)).append("\n");
+        if (node.getNumChildren() == 3) {
+            return dealWithIfStatement(node, methodName);
         }
+        return dealWithWhileStatement(node, methodName);
+
+    }
+
+    private String dealWithWhileStatement(JmmNode node, String methodName) {
+        StringBuilder ret = new StringBuilder();
+        String whileTag = getNewWhileTag();
+        String endWhileTag = getNewEndWhileTag();
+        whileCounter++;
+
+        ret.append(getIdentationString()).append(whileTag).append(":\n");
+        increaseIdentation();
+
+        JmmNode conditionExpressionNode = node.getJmmChild(0).getJmmChild(0);
+        ExpressionVisitor exprVisitor = new ExpressionVisitor(symbolTable, this.tempVariables);
+        ExpressionVisitorInformation conditionInfo = exprVisitor.visit(conditionExpressionNode, methodName);
+        this.tempVariables += exprVisitor.getUsedAuxVariables();
+
+        for (var line : conditionInfo.getAuxLines()) {
+            ret.append(getIdentationString()).append(line).append("\n");
+        }
+
+        ret.append(getIdentationString()).append("if (").append(conditionInfo.getResultNameAndType()).append(") goto ").append(endWhileTag).append(";\n");
+
+        ret.append(dealWithElseBlock(node.getJmmChild(1), methodName));
+        ret.append("goto ").append(whileTag).append(";\n");
+
+        decreaseIdentation();
+
+        return ret.toString();
+    }
+
+    private String dealWithIfStatement(JmmNode node, String methodName) {
+        StringBuilder ret = new StringBuilder();
+
+        JmmNode conditionExpressionNode = node.getJmmChild(0).getJmmChild(0);
+        ExpressionVisitor exprVisitor = new ExpressionVisitor(symbolTable, this.tempVariables);
+        ExpressionVisitorInformation conditionInfo = exprVisitor.visit(conditionExpressionNode, methodName);
+        this.tempVariables += exprVisitor.getUsedAuxVariables();
+
+
+        for (var line : conditionInfo.getAuxLines()) {
+            ret.append(getIdentationString()).append(line).append("\n");
+        }
+        String ifTrueTag = getNewIfTrueTag();
+        String endIfTag = getNewEndIfTag();
+        ifCounter++;
+
+        ret.append(getIdentationString()).append("if (").append(conditionInfo.getResultNameAndType()).append(") goto ").append(ifTrueTag).append(";\n");
+        increaseIdentation();
+        ret.append(dealWithElseBlock(node.getJmmChild(2), methodName));
+        decreaseIdentation();
+        ret.append(getIdentationString()).append("goto ").append(endIfTag).append(";\n");
+        ret.append(getIdentationString()).append(ifTrueTag).append(":\n");
+        increaseIdentation();
+        ret.append(dealWithIfTrue(node.getJmmChild(1), methodName));
+        ret.append(getIdentationString()).append("goto ").append(endIfTag).append(";\n");
+        decreaseIdentation();
+        ret.append(getIdentationString()).append(endIfTag).append(":\n");
 
         return ret.toString();
     }
