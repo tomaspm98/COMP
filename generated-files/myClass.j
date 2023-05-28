@@ -17,35 +17,34 @@
 	return
 .end method
 
-.method public testArgumentArray([I)V
-	.limit stack 3
-	.limit locals 2
-	aload_1
-	iconst_0
+.method public dummyFunction(I)V
+	.limit stack 2
+	.limit locals 3
+	iload_1
 	iconst_1
-	iastore
-	aload_1
-	iconst_1
-	iconst_2
-	iastore
-	aload_1
-	iconst_2
-	iconst_3
-	iastore
+	iadd
+	istore_2
+	iload_2
+	istore_1
 	return
 .end method
 
-.method public testCallArgumentArray()V
+.method public testOptimization()V
 	.limit stack 2
 	.limit locals 4
 	iconst_3
-	newarray int
-	astore_1
-	aload_1
-	astore_2
-	aload_0
-	aload_2
-	invokevirtual myClass/testArgumentArray([I)V
-; ERROR: getStore()
+	istore_1
+	iconst_4
+	istore_1
+	iconst_1
+	iconst_2
+	iadd
+	istore_2
+	iconst_1
+	iload_2
+	iadd
+	istore_3
+	iload_3
+	istore_1
 	return
 .end method

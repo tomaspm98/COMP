@@ -58,6 +58,11 @@ public class Launcher {
 
         Optimizer optimizer = new Optimizer();
 
+        if (config.get("optimize") != null && config.get("optimize").equals("true")) {
+            System.err.println("Optimizing...");
+            analysisResult = optimizer.optimize(analysisResult);
+        }
+
         OllirResult ollirResult =  optimizer.toOllir(analysisResult);
 
         System.out.println(ollirResult.getOllirCode());
@@ -107,7 +112,7 @@ public class Launcher {
         // Create config
         Map<String, String> config = new HashMap<>();
         config.put("inputFile", args[0]);
-        config.put("optimize", "false");
+        config.put("optimize", "true");
         config.put("registerAllocation", "-1");
         config.put("debug", "false");
 
