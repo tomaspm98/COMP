@@ -48,7 +48,7 @@ During the development of your compiler you will update this file in order to se
 
 ## Final Checkpoint Information
 
-Gilherme Sequeira - up202004648 - 33,(3) %
+Guilherme Sequeira - up202004648 - 33,(3) %
 Tomás Maciel - up202006845 - 33,(3) %
 Sérgio Carvalhais - up202007544 - 33,(3) %
 
