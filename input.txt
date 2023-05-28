@@ -18,11 +18,12 @@ class myClass extends importedClass {
         boolean a;
         int i;
 
-        if (a) {
-            i = 1;
-        } else {
-            i = 2;
+        while (i < 5) {
+            i = i + 1;
+            a = false;
+            a = a && a;
         }
+        i = i + 1;
     }
 
 /*

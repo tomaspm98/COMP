@@ -403,9 +403,9 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         ret.append(getIdentationString()).append("if (").append(conditionInfo.getResultNameAndType()).append(") goto ").append(endWhileTag).append(";\n");
 
         ret.append(dealWithElseBlock(node.getJmmChild(1), methodName));
-        ret.append("goto ").append(whileTag).append(";\n");
-
+        ret.append(getIdentationString()).append("goto ").append(whileTag).append(";\n");
         decreaseIdentation();
+        ret.append(getIdentationString()).append(endWhileTag).append(":\n");
 
         return ret.toString();
     }
@@ -534,7 +534,7 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
         }
 
         return exprAuxInfoToString(leftVarData) + exprAuxInfoToString(assignedExprNodeData) + getIdentationString() + varName + "." + assignedExprNodeData.getOllirType()
-                + ":=." + assignedExprNodeData.getOllirType() + " " + assignedExprNodeData.getResultNameAndType() + ";\n" + lastLine;
+                + " :=." + assignedExprNodeData.getOllirType() + " " + assignedExprNodeData.getResultNameAndType() + ";\n" + lastLine;
     }
 
     private String dealWithArrayAssignmentStatement(JmmNode node, String methodName) {
