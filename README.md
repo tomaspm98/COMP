@@ -46,4 +46,10 @@ In order for the test class to find your implementations for the stages, it uses
 
 During the development of your compiler you will update this file in order to setup the classes that implement each of the compilation stages.
 
-FIRST COMMIT
+## Final Checkpoint Information
+
+Gilherme Sequeira - up202004648 - 33,(3) %
+Tomás Maciel - up202006845 - 33,(3) %
+Sérgio Carvalhais - up202007544 - 33,(3) %
+
+Auto-evaluation - 17,5
