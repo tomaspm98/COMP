@@ -14,6 +14,7 @@ class myClass extends importedClass {
 	ioPlus importedType;
 	madeUp madeUpType;
 
+    /*
     public void testIfs() {
         boolean a;
         int i;
@@ -23,7 +24,19 @@ class myClass extends importedClass {
             a = false;
             a = a && a;
         }
-        i = i + 1;
+    }
+    */
+
+    public void testArgumentArray(int[] a) {
+        a[0] = 1;
+        a[1] = 2;
+        a[2] = 3;
+    }
+
+    public void testCallArgumentArray() {
+        int[] a;
+        a = new int[3];
+        this.testArgumentArray(a);
     }
 
 /*

@@ -100,10 +100,6 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
 
         StringBuilder ret = new StringBuilder(name).append(".");
 
-        if (type.isArray()) {
-            ret.append("array.");
-        }
-
         ret.append(jmmTypeToOllirType(type, className));
         return ret.toString();
     }
@@ -341,6 +337,8 @@ public class OllirGenerator extends AJmmVisitor<String, String> {
             ret.append(exprAuxInfoToString(retInfo));
             ret.append(getIdentationString()).append("ret.");
             ret.append(retInfo.getOllirType()).append(" ").append(retInfo.getResultNameAndType()).append(";\n");
+        } else {
+            ret.append(getIdentationString()).append("ret.V;\n");
         }
         ret.append(getIdentationString()).append("}");
         decreaseIdentation();

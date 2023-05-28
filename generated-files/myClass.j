@@ -17,42 +17,35 @@
 	return
 .end method
 
-.method public testIfs()V
-	.limit stack 2
-	.limit locals 8
-WHILE0:
-	iload_2
-	iconst_5
-	if_icmplt TRUE0
+.method public testArgumentArray([I)V
+	.limit stack 3
+	.limit locals 2
+	aload_1
 	iconst_0
-	goto NEXT0
-TRUE0:
 	iconst_1
-NEXT0:
-	istore_1
-	iload_1
-	ifne ENDWHILE0
-	iload_2
+	iastore
+	aload_1
 	iconst_1
-	iadd
-	istore_3
-	iload_3
-	istore_2
-	iload 5
-	istore 4
-	iload 4
-	iload 4
-	iand
-	istore 6
-	iload 6
-	istore 4
-	goto WHILE0
-ENDWHILE0:
-	iload_2
-	iconst_1
-	iadd
-	istore 7
-	iload 7
-	istore_2
+	iconst_2
+	iastore
+	aload_1
+	iconst_2
+	iconst_3
+	iastore
+	return
+.end method
+
+.method public testCallArgumentArray()V
+	.limit stack 2
+	.limit locals 4
+	iconst_3
+	newarray int
+	astore_1
+	aload_1
+	astore_2
+	aload_0
+	aload_2
+	invokevirtual myClass/testArgumentArray([I)V
+; ERROR: getStore()
 	return
 .end method
