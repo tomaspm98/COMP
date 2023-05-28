@@ -52,4 +52,4 @@ Guilherme Sequeira - up202004648 - 33,(3) %
 Tomás Maciel - up202006845 - 33,(3) %
 Sérgio Carvalhais - up202007544 - 33,(3) %
 
-Auto-evaluation - 17,5
+Auto-evaluation - 16
