@@ -26,7 +26,7 @@ class myClass extends importedClass {
         }
     }
     */
-    /*
+
     public void testArgumentArray(int[] a) {
         a[0] = 1;
         a[1] = 2;
@@ -37,41 +37,6 @@ class myClass extends importedClass {
         int[] a;
         a = new int[3];
         this.testArgumentArray(a);
-    }
-    */
-
-    /*
-    public void testWhile() {
-        int i;
-        i = 0;
-        while (i < 5) {
-            i = i + 1;
-            io.println(i);
-        }
-    }
-    */
-
-    public void dummyFunction(int something) {
-        something = something + 1;
-    }
-
-    public void testOptimization() {
-    int a;
-    int b;
-    int c;
-    boolean something;
-
-    a = 1;
-    b = 2;
-    c = 3;
-    c = 4;
-
-    something = a < b;
-    c = a + (a + b);
-
-
-    }
-
     }
 
 /*
